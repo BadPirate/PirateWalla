@@ -1,0 +1,296 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B4EB74621C3CE8B5009885C7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */; };
+		B4EB74691C3CE8B5009885C7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B4EB74671C3CE8B5009885C7 /* Main.storyboard */; };
+		B4EB746B1C3CE8B5009885C7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B4EB746A1C3CE8B5009885C7 /* Assets.xcassets */; };
+		B4EB746E1C3CE8B5009885C7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B4EB746C1C3CE8B5009885C7 /* LaunchScreen.storyboard */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B4EB745E1C3CE8B5009885C7 /* PirateWalla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PirateWalla.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		B4EB74681C3CE8B5009885C7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		B4EB746A1C3CE8B5009885C7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B4EB746D1C3CE8B5009885C7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		B4EB746F1C3CE8B5009885C7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B4EB745B1C3CE8B5009885C7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B4EB74551C3CE8B5009885C7 = {
+			isa = PBXGroup;
+			children = (
+				B4EB74601C3CE8B5009885C7 /* PirateWalla */,
+				B4EB745F1C3CE8B5009885C7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B4EB745F1C3CE8B5009885C7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B4EB745E1C3CE8B5009885C7 /* PirateWalla.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B4EB74601C3CE8B5009885C7 /* PirateWalla */ = {
+			isa = PBXGroup;
+			children = (
+				B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */,
+				B4EB74671C3CE8B5009885C7 /* Main.storyboard */,
+				B4EB746A1C3CE8B5009885C7 /* Assets.xcassets */,
+				B4EB746C1C3CE8B5009885C7 /* LaunchScreen.storyboard */,
+				B4EB746F1C3CE8B5009885C7 /* Info.plist */,
+			);
+			path = PirateWalla;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B4EB745D1C3CE8B5009885C7 /* PirateWalla */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B4EB74721C3CE8B5009885C7 /* Build configuration list for PBXNativeTarget "PirateWalla" */;
+			buildPhases = (
+				B4EB745A1C3CE8B5009885C7 /* Sources */,
+				B4EB745B1C3CE8B5009885C7 /* Frameworks */,
+				B4EB745C1C3CE8B5009885C7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PirateWalla;
+			productName = PirateWalla;
+			productReference = B4EB745E1C3CE8B5009885C7 /* PirateWalla.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B4EB74561C3CE8B5009885C7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0720;
+				LastUpgradeCheck = 0720;
+				ORGANIZATIONNAME = "Logic High";
+				TargetAttributes = {
+					B4EB745D1C3CE8B5009885C7 = {
+						CreatedOnToolsVersion = 7.2;
+						DevelopmentTeam = GZ2N47M83H;
+					};
+				};
+			};
+			buildConfigurationList = B4EB74591C3CE8B5009885C7 /* Build configuration list for PBXProject "PirateWalla" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B4EB74551C3CE8B5009885C7;
+			productRefGroup = B4EB745F1C3CE8B5009885C7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B4EB745D1C3CE8B5009885C7 /* PirateWalla */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B4EB745C1C3CE8B5009885C7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B4EB746E1C3CE8B5009885C7 /* LaunchScreen.storyboard in Resources */,
+				B4EB746B1C3CE8B5009885C7 /* Assets.xcassets in Resources */,
+				B4EB74691C3CE8B5009885C7 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B4EB745A1C3CE8B5009885C7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B4EB74621C3CE8B5009885C7 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		B4EB74671C3CE8B5009885C7 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B4EB74681C3CE8B5009885C7 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		B4EB746C1C3CE8B5009885C7 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B4EB746D1C3CE8B5009885C7 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		B4EB74701C3CE8B5009885C7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B4EB74711C3CE8B5009885C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B4EB74731C3CE8B5009885C7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				INFOPLIST_FILE = PirateWalla/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.logichigh.PirateWalla;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+			};
+			name = Debug;
+		};
+		B4EB74741C3CE8B5009885C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				INFOPLIST_FILE = PirateWalla/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.logichigh.PirateWalla;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B4EB74591C3CE8B5009885C7 /* Build configuration list for PBXProject "PirateWalla" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4EB74701C3CE8B5009885C7 /* Debug */,
+				B4EB74711C3CE8B5009885C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B4EB74721C3CE8B5009885C7 /* Build configuration list for PBXNativeTarget "PirateWalla" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4EB74731C3CE8B5009885C7 /* Debug */,
+				B4EB74741C3CE8B5009885C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B4EB74561C3CE8B5009885C7 /* Project object */;
+}

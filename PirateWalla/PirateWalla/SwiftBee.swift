@@ -120,10 +120,7 @@ class SBObject : CustomStringConvertible, Hashable {
     
     var id : Int {
         get {
-            if let ids = data["id"] as? String, let id = Int(ids) {
-                return id
-            }
-            return -1
+            return Int(data["id"] as? String ?? "0") ?? 0
         }
     }
     

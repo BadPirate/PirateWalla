@@ -1,27 +1,128 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9531" systemVersion="15D9c" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="cZd-Gh-k1f">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9531" systemVersion="15D9c" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="CZv-xv-gEt">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9529"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
-        <!--Table View Controller-->
-        <scene sceneID="7X9-nk-DJn">
+        <!--Root View Controller-->
+        <scene sceneID="bSo-dM-ZaI">
             <objects>
-                <tableViewController id="cZd-Gh-k1f" sceneMemberID="viewController">
-                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" id="qyQ-9h-fa7">
+                <tableViewController id="uuH-gm-8Bj" customClass="ActionTVC" customModule="PirateWalla" customModuleProvider="target" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="66" sectionHeaderHeight="18" sectionFooterHeight="18" id="HTe-nT-QSh">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <prototypes>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="pickup" id="xJK-Xz-fqI" customClass="PickupCell" customModule="PirateWalla" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="114" width="600" height="66"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="xJK-Xz-fqI" id="Sqa-uA-Kot">
+                                    <rect key="frame" x="0.0" y="0.0" width="600" height="65"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="exj-cl-WLQ">
+                                            <rect key="frame" x="8" y="9" width="584" height="49"/>
+                                            <subviews>
+                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="1JT-bO-SdO" userLabel="Items Stack">
+                                                    <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
+                                                    <subviews>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="psS-qa-TJr">
+                                                            <rect key="frame" x="0.0" y="0.0" width="50" height="49"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="50" id="RNR-df-2tk"/>
+                                                            </constraints>
+                                                        </imageView>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WJY-hd-DsT">
+                                                            <rect key="frame" x="58" y="0.0" width="50" height="49"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="50" id="twY-be-K7F"/>
+                                                            </constraints>
+                                                        </imageView>
+                                                    </subviews>
+                                                </stackView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="map_marker" translatesAutoresizingMaskIntoConstraints="NO" id="TgW-IR-54X">
+                                                    <rect key="frame" x="116" y="12" width="16" height="26"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="16" id="V9o-rQ-FQT"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cWo-6d-yHG" userLabel="Place Image">
+                                                    <rect key="frame" x="140" y="0.0" width="50" height="49"/>
+                                                </imageView>
+                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="5t4-CB-qyo" userLabel="Description Stack">
+                                                    <rect key="frame" x="198" y="4" width="386" height="42"/>
+                                                    <subviews>
+                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Logic High Software" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VbR-6x-vGg" userLabel="Label">
+                                                            <rect key="frame" x="0.0" y="0.0" width="155" height="21"/>
+                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                            <nil key="highlightedColor"/>
+                                                        </label>
+                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="3 Missing Items" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5zP-Zg-lPo" userLabel="Detail Label">
+                                                            <rect key="frame" x="0.0" y="21" width="120" height="21"/>
+                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                            <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                                                            <nil key="highlightedColor"/>
+                                                        </label>
+                                                    </subviews>
+                                                </stackView>
+                                            </subviews>
+                                        </stackView>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstAttribute="bottomMargin" secondItem="exj-cl-WLQ" secondAttribute="bottom" id="AvO-Kk-IbR"/>
+                                        <constraint firstItem="exj-cl-WLQ" firstAttribute="leading" secondItem="Sqa-uA-Kot" secondAttribute="leadingMargin" id="SFc-5x-Qoz"/>
+                                        <constraint firstAttribute="trailingMargin" secondItem="exj-cl-WLQ" secondAttribute="trailing" id="tLc-mJ-72w"/>
+                                        <constraint firstItem="exj-cl-WLQ" firstAttribute="top" secondItem="Sqa-uA-Kot" secondAttribute="topMargin" id="wom-SO-J5l"/>
+                                    </constraints>
+                                </tableViewCellContentView>
+                                <connections>
+                                    <outlet property="detailLabel" destination="5zP-Zg-lPo" id="o6m-6c-TRj"/>
+                                    <outlet property="itemsStack" destination="1JT-bO-SdO" id="iak-wv-kpc"/>
+                                    <outlet property="label" destination="VbR-6x-vGg" id="1wP-cA-VKK"/>
+                                    <outlet property="placeImageView" destination="cWo-6d-yHG" id="8s8-D0-och"/>
+                                </connections>
+                            </tableViewCell>
+                        </prototypes>
                         <connections>
-                            <outlet property="dataSource" destination="cZd-Gh-k1f" id="noN-L4-8my"/>
-                            <outlet property="delegate" destination="cZd-Gh-k1f" id="6II-EX-vuI"/>
+                            <outlet property="dataSource" destination="uuH-gm-8Bj" id="1Uk-WZ-1Zb"/>
+                            <outlet property="delegate" destination="uuH-gm-8Bj" id="ceE-Fd-EzI"/>
                         </connections>
                     </tableView>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" title="Root View Controller" id="MXS-cH-Ao0">
+                        <barButtonItem key="rightBarButtonItem" systemItem="refresh" id="bUn-ZG-DAX">
+                            <connections>
+                                <action selector="reload" destination="uuH-gm-8Bj" id="QTZ-pR-J4f"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                 </tableViewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="GGv-nu-clA" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iN7-WN-b0m" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="435" y="-427"/>
+            <point key="canvasLocation" x="961" y="-420"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="YtQ-X9-9SN">
+            <objects>
+                <navigationController id="CZv-xv-gEt" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="Dbt-kb-o7b">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="uuH-gm-8Bj" kind="relationship" relationship="rootViewController" id="Nif-cu-qNF"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="PgO-J3-Hy7" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="141" y="-420"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="map_marker" width="16" height="26"/>
+    </resources>
 </document>

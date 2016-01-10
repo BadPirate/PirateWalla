@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "4250F94C86C253ECA892F1720EDEB141E2E40F93",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "4250F94C86C253ECA892F1720EDEB141E2E40F93" : 0,
+    "5F19EC79C0E90C40F2EC64F052FA98529AE0B6CD" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "C536FB7A-A8DA-4106-A28A-83C80E964FF3",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "4250F94C86C253ECA892F1720EDEB141E2E40F93" : "piratewalla\/",
+    "5F19EC79C0E90C40F2EC64F052FA98529AE0B6CD" : "BP\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "PirateWalla",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "PirateWalla\/PirateWalla.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/bitbucket.org\/BadPirate\/piratewalla.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "4250F94C86C253ECA892F1720EDEB141E2E40F93"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/BadPirate\/BP.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "5F19EC79C0E90C40F2EC64F052FA98529AE0B6CD"
+    }
+  ]
+}

@@ -129,7 +129,18 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     func locationRequired() {
         AppDelegate.handleInternalError(.LocationRequired, description: "Location required to use PirateWalla.  Please enable in settings.") { [weak self] () -> Void in
             guard let s = self else { return }
-            s.locationManager.startUpdatingLocation()
+            if let userLocation = s.locationManager.location {
+                if userLocation.timestamp.timeIntervalSinceNow < -5 {
+                    s.locationManager.startUpdatingLocation()
+                }
+                else
+                {
+                    s.nearbyForLocation(userLocation)
+                }
+            }
+            else {
+                s.locationManager.startUpdatingLocation()
+            }
         }
     }
     
@@ -403,11 +414,36 @@ class PickupRow : ActionRow {
     }
 }
 
-class PickupCell : UITableViewCell {
+class PickupCell : UITableViewCell, CLLocationManagerDelegate {
     @IBOutlet var itemsStack : UIStackView?
     @IBOutlet var placeImageView : UIImageView?
     @IBOutlet var label : UILabel?
     @IBOutlet var detailLabel : UILabel?
+    
+    let locationManager = CLLocationManager()
+    
+    override func awakeFromNib() {
+        locationManager.delegate = self
+    }
+    
+    func locationManager(manager: CLLocationManager, didUpdateToLocation newLocation: CLLocation, fromLocation oldLocation: CLLocation) {
+        checkLocation()
+    }
+    
+    func checkLocation() {
+        guard let row = row, userLocation = locationManager.location else { return }
+        let location = CLLocation(latitude: row.place.location.latitude, longitude: row.place.location.longitude)
+        withinRange = location.distanceFromLocation(userLocation) < row.place.radius + userLocation.horizontalAccuracy
+    }
+    
+    var withinRange : Bool = true {
+        didSet {
+            if oldValue == withinRange { return } // No change
+            detailLabel!.enabled = withinRange
+            label!.enabled = withinRange
+            backgroundColor! = withinRange ? UIColor.whiteColor() : UIColor.lightGrayColor()
+        }
+    }
     
     var row : PickupRow? {
         didSet {
@@ -415,7 +451,10 @@ class PickupCell : UITableViewCell {
             itemsStack!.subviews.forEach { (view) -> () in
                 view.removeFromSuperview()
             }
+            locationManager.stopUpdatingLocation()
             if let row = row {
+                checkLocation()
+                locationManager.startUpdatingLocation()
                 var imageSize = 100
                 if UIScreen.mainScreen().scale == 1.0 {
                     imageSize = 50

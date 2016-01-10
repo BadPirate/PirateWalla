@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 class SBPlace: SBObject {
     var itemCount : Int {
@@ -44,6 +45,20 @@ class SBPlace: SBObject {
     var name : String {
         get {
             return data["name"] as? String ?? "Error"
+        }
+    }
+    
+    var location : CLLocationCoordinate2D {
+        get {
+            let lat = Double(data["lat"] as? String ?? "0") ?? 0
+            let lng = Double(data["lng"] as? String ?? "0") ?? 0
+            return CLLocationCoordinate2DMake(lat, lng)
+        }
+    }
+    
+    var radius : Double {
+        get {
+            return Double(data["radius"] as? String ?? "-1") ?? -1
         }
     }
 }

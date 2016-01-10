@@ -22,7 +22,8 @@ class SBUser : SBObject {
             if let data = data, savedItemsDictionary = data["saveditems"] as? [ String : [ String : AnyObject ] ] {
                 savedItems = Set<SBSavedItem>()
                 for (itemType, savedItemDictionary) in savedItemsDictionary {
-                    savedItems!.insert(SBSavedItem(dictionary: savedItemDictionary, type: itemType, bee: s.bee))
+                    let item = SBSavedItem(dictionary: savedItemDictionary, type: itemType, bee: s.bee)
+                    savedItems!.insert(item)
                 }
             }
             completion(error: error, savedItems: savedItems)

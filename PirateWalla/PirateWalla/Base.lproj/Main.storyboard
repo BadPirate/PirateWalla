@@ -6,10 +6,10 @@
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
-        <!--Root View Controller-->
+        <!--ActionTVC-->
         <scene sceneID="bSo-dM-ZaI">
             <objects>
-                <tableViewController id="uuH-gm-8Bj" customClass="ActionTVC" customModule="PirateWalla" customModuleProvider="target" sceneMemberID="viewController">
+                <tableViewController id="uuH-gm-8Bj" userLabel="ActionTVC" customClass="ActionTVC" customModule="PirateWalla" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="66" sectionHeaderHeight="18" sectionFooterHeight="18" id="HTe-nT-QSh">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -93,6 +93,11 @@
                     </tableView>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" title="Root View Controller" id="MXS-cH-Ao0">
+                        <barButtonItem key="leftBarButtonItem" image="settings" id="k4e-HD-ZdF">
+                            <connections>
+                                <action selector="settings" destination="uuH-gm-8Bj" id="wLl-BJ-ZAE"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" systemItem="refresh" id="bUn-ZG-DAX">
                             <connections>
                                 <action selector="reload" destination="uuH-gm-8Bj" id="QTZ-pR-J4f"/>
@@ -124,5 +129,6 @@
     </scenes>
     <resources>
         <image name="map_marker" width="16" height="26"/>
+        <image name="settings" width="26" height="26"/>
     </resources>
 </document>

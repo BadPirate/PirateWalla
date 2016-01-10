@@ -9,7 +9,7 @@
 import UIKit
 
 enum ErrorCode : Int {
-    case LocationRequired = 1
+    case LocationRequired = 1, WallabeeError
 }
 
 typealias EmptyCompletion = () -> Void
@@ -44,8 +44,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     class func handleInternalError(code : ErrorCode, description : String, completion : EmptyCompletion) {
-        let error = NSError(domain: "piratewalla", code: code.rawValue, userInfo: [ NSLocalizedDescriptionKey : description ])
-        self.handleError(error, completion: completion)
+        self.handleError(self.errorWithString(description, code: code), completion: completion)
+    }
+    
+    class func errorWithString(description : String, code: ErrorCode) -> NSError {
+        return NSError(domain: "piratewalla", code: code.rawValue, userInfo: [ NSLocalizedDescriptionKey : description ])
     }
 }
 

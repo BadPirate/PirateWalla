@@ -51,6 +51,17 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         getNearby()
     }
     
+    @IBAction func settings() {
+        let alert = UIAlertController(title: "Settings", message: nil, preferredStyle: .ActionSheet)
+        alert.addAction(UIAlertAction(title: "Logout", style: .Default, handler: { [weak self] _ -> Void in
+            self?.logout()
+            self?.login()
+            self?.reload()
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        self.presentViewController(alert, animated: true, completion: nil)
+    }
+    
     func startedActivity() {
         totalActivities++
         updateProgress()
@@ -87,7 +98,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         getSavedItems()
     }
     
-    
+    func logout() {
+        NSUserDefaults.standardUserDefaults().removeObjectForKey("id")
+        NSUserDefaults.standardUserDefaults().synchronize()
+    }
     
     func login() {
         if let id = NSUserDefaults.standardUserDefaults().stringForKey("id")
@@ -98,8 +112,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 s.stoppedActivity()
                 if let error = error {
                     AppDelegate.handleError(error, completion: { () -> Void in
-                        NSUserDefaults.standardUserDefaults().removeObjectForKey("id")
-                        NSUserDefaults.standardUserDefaults().synchronize()
+                        s.logout()
                         s.login()
                     })
                     return

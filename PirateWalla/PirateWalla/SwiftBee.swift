@@ -67,6 +67,10 @@ class SwiftBee {
                         e = error
                     }
                 }
+                if let r = result, errorString = r["error"] as? String {
+                    result = nil
+                    e = AppDelegate.errorWithString(errorString, code: .WallabeeError)
+                }
                 dispatch_async(dispatch_get_main_queue(), { () -> Void in
                     completion(error: e, data: result)
                 })
@@ -106,6 +110,12 @@ class SBObject : CustomStringConvertible, Hashable {
     init(dictionary : [ String : AnyObject ], bee: SwiftBee) {
         data = dictionary
         self.bee = bee
+    }
+    
+    var error : String? {
+        get {
+            return data["error"] as? String
+        }
     }
     
     var id : Int {

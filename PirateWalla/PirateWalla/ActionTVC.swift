@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import CoreLocation
 
-
+let helicarrierID = 1728050
 
 class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     lazy var bee : SwiftBee = SwiftBee()
@@ -192,6 +192,52 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         }
     }
     
+    func parseItems(items: [SBItem]?, place : SBPlace)
+    {
+        guard let items = items, savedItems = savedItems else { return }
+        var missingItems = [SBItem]()
+        var improvedItems = [SBItem]()
+        for item in items {
+            // Missing?
+            if savedItems[item.itemTypeID] == nil {
+                if item.locked {
+                    print("Missing but locked - \(item.name)")
+                    continue
+                }
+                else
+                {
+                    print("Missing - \(item.name)")
+                    missingItems.append(item)
+                }
+            }
+            
+            // Improved?
+            if let savedItem = savedItems[item.itemTypeID] {
+                if item.number < savedItem.number {
+                    if item.locked {
+                        print("Improved but locked - \(item.name)")
+                        continue
+                    }
+                    else
+                    {
+                        print("Improved - \(item.name)")
+                        improvedItems.append(item)
+                    }
+                }
+            }
+        }
+        if missingItems.count > 0 {
+            let pickupRow = PickupRow(place: place, items: missingItems, kindLabel: "missing")
+            missingSection.pendingRows.append(pickupRow)
+            shouldUpdateSections()
+        }
+        if improvedItems.count > 0 {
+            let pickupRow = PickupRow(place: place, items: improvedItems, kindLabel: "improved")
+            improveSection.pendingRows.append(pickupRow)
+            shouldUpdateSections()
+        }
+    }
+    
     func refreshList() {
         if !NSThread.isMainThread() {
             dispatch_sync(dispatch_get_main_queue(), { [weak self] () -> Void in
@@ -209,6 +255,21 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         
         clearRows()
 
+        // Check the Helicarrier
+        startedActivity()
+        bee.place(helicarrierID) { [weak self] (error, place) -> Void in
+            self?.stoppedActivity()
+            guard let s = self else { return }
+            if let place = place {
+                s.startedActivity()
+                place.items({ [weak s] (error, items) -> Void in
+                    s?.stoppedActivity()
+                    guard let s = s else { return }
+                    s.parseItems(items, place: place)
+                })
+            }
+        }
+        
         print("Refreshing list User - \(user.id) - Nearby \(nearby.count) - Saved Items \(savedItems.count)")
         for place in nearby {
             startedActivity()
@@ -220,49 +281,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     AppDelegate.handleError(error, completion: { () -> Void in })
                     return
                 }
-                if let items = items {
-                    var missingItems = [SBItem]()
-                    var improvedItems = [SBItem]()
-                    for item in items {
-                        // Missing?
-                        if savedItems[item.itemTypeID] == nil {
-                            if item.locked {
-                                print("Missing but locked - \(item.name)")
-                                continue
-                            }
-                            else
-                            {
-                                print("Missing - \(item.name)")
-                                missingItems.append(item)
-                            }
-                        }
-                        
-                        // Improved?
-                        if let savedItem = savedItems[item.itemTypeID] {
-                            if item.number < savedItem.number {
-                                if item.locked {
-                                    print("Improved but locked - \(item.name)")
-                                    continue
-                                }
-                                else
-                                {
-                                    print("Improved - \(item.name)")
-                                    improvedItems.append(item)
-                                }
-                            }
-                        }
-                    }
-                    if missingItems.count > 0 {
-                        let pickupRow = PickupRow(place: place, items: missingItems, kindLabel: "missing")
-                        s.missingSection.pendingRows.append(pickupRow)
-                        s.shouldUpdateSections()
-                    }
-                    if improvedItems.count > 0 {
-                        let pickupRow = PickupRow(place: place, items: improvedItems, kindLabel: "improved")
-                        s.improveSection.pendingRows.append(pickupRow)
-                        s.shouldUpdateSections()
-                    }
-                }
+                s.parseItems(items, place: place)
             })
         }
     }
@@ -422,7 +441,27 @@ class PickupRow : ActionRow {
         }
         select = { tableView, indexPath in
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
-            UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://places/\(place.id)")!)
+            if place.id == helicarrierID {
+                if NSUserDefaults.standardUserDefaults().boolForKey("helicarrierWarned") != true {
+                    let alert = UIAlertController(title: "Helicarrier", message: "Piratewalla can't jump you right into the Helicarrier view at this time, you'll need to manually go into, Places -> Foragers Helicarrier to collect these", preferredStyle: .Alert)
+                    alert.addAction(UIAlertAction(title: "Got it", style: .Default, handler: { (_) -> Void in
+                        UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
+                    }))
+                    if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {
+                        rootVC.presentViewController(alert, animated: true, completion: nil)
+                    }
+                    NSUserDefaults.standardUserDefaults().setBool(true, forKey: "helicarrierWarned")
+                    NSUserDefaults.standardUserDefaults().synchronize()
+                }
+                else
+                {
+                    UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
+                }
+            }
+            else
+            {
+                UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://places/\(place.id)")!)
+            }
         }
     }
 }
@@ -445,6 +484,7 @@ class PickupCell : UITableViewCell, CLLocationManagerDelegate {
     
     func checkLocation() {
         guard let row = row, userLocation = locationManager.location else { return }
+        if row.place.id == helicarrierID { withinRange = true; return }
         let location = CLLocation(latitude: row.place.location.latitude, longitude: row.place.location.longitude)
         withinRange = location.distanceFromLocation(userLocation) < row.place.radius + userLocation.horizontalAccuracy
     }

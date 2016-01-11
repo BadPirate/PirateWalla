@@ -19,6 +19,17 @@ class SwiftBee {
         session = NSURLSession(configuration: NSURLSessionConfiguration.defaultSessionConfiguration())
     }
     
+    func place(id : Int, completion : (error : NSError?, place : SBPlace?) -> Void) {
+        get("/places/\(id)") { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            var place : SBPlace? = nil
+            if let data = data {
+                place = SBPlace(dictionary: data, bee: s)
+            }
+            completion(error: error, place: place)
+        }
+    }
+    
     func user(identifier : String, completion : (error: NSError?, user: SBUser?) -> Void) {
         get("/users/\(identifier.URLEncodedString()!)") { [weak self] (error, data) -> Void in
             guard let s = self else { return }

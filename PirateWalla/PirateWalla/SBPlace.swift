@@ -37,7 +37,8 @@ class SBPlace: SBObject {
     
     func imageURL(size: Int) -> NSURL? {
         if let string = data["image_url_\(size)"] as? String {
-            return NSURL(string: string)
+            let secureString = string.stringByReplacingOccurrencesOfString("http:", withString: "https:")
+           return NSURL(string: secureString)
         }
         return nil
     }

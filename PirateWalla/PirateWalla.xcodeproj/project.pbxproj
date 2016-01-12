@@ -16,6 +16,8 @@
 		B4EB747B1C3D6530009885C7 /* ActionTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EB747A1C3D6530009885C7 /* ActionTVC.swift */; };
 		B4EB747D1C3D6890009885C7 /* SBPlace.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EB747C1C3D6890009885C7 /* SBPlace.swift */; };
 		B4EB74871C3D8B65009885C7 /* SBItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EB74861C3D8B65009885C7 /* SBItem.swift */; };
+		B4F382231C44248600274826 /* SBSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F382221C44248600274826 /* SBSet.swift */; };
+		B4F382251C44273300274826 /* SBItemType.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F382241C44273300274826 /* SBItemType.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +33,8 @@
 		B4EB747C1C3D6890009885C7 /* SBPlace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SBPlace.swift; sourceTree = "<group>"; };
 		B4EB747F1C3D6AC6009885C7 /* PirateWalla-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PirateWalla-Bridging-Header.h"; sourceTree = "<group>"; };
 		B4EB74861C3D8B65009885C7 /* SBItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SBItem.swift; sourceTree = "<group>"; };
+		B4F382221C44248600274826 /* SBSet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SBSet.swift; sourceTree = "<group>"; };
+		B4F382241C44273300274826 /* SBItemType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SBItemType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +86,8 @@
 				B4EB74781C3CEC58009885C7 /* SBUser.swift */,
 				B4EB747C1C3D6890009885C7 /* SBPlace.swift */,
 				B4EB74861C3D8B65009885C7 /* SBItem.swift */,
+				B4F382221C44248600274826 /* SBSet.swift */,
+				B4F382241C44273300274826 /* SBItemType.swift */,
 			);
 			name = SwiftBee;
 			sourceTree = "<group>";
@@ -159,6 +165,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				B4EB74791C3CEC58009885C7 /* SBUser.swift in Sources */,
+				B4F382251C44273300274826 /* SBItemType.swift in Sources */,
+				B4F382231C44248600274826 /* SBSet.swift in Sources */,
 				B4EB747B1C3D6530009885C7 /* ActionTVC.swift in Sources */,
 				B4EB747D1C3D6890009885C7 /* SBPlace.swift in Sources */,
 				B4EB74871C3D8B65009885C7 /* SBItem.swift in Sources */,

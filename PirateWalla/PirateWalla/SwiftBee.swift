@@ -9,6 +9,8 @@
 import Foundation
 import CoreLocation
 
+var itemTypesCache = [ Int : SBItemType ]()
+var setsCache = [ Int : SBSet ]()
 
 class SwiftBee {
     let gateTime : NSTimeInterval = 0.25
@@ -38,6 +40,84 @@ class SwiftBee {
                 user = SBUser(dictionary: data, bee: s)
             }
             completion(error: error, user: user)
+        }
+    }
+    
+    func set(id : Int, completion : (error : NSError?, set : SBSet?) -> Void) {
+        if let set = setsCache[id] {
+            completion(error: nil, set: set)
+            return
+        }
+        get("/sets/\(id)") { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            if let error = error {
+                print("Error retrieving set - \(id) - \(error)")
+                let set = SBSet.errorSet(s)
+                setsCache[id] = set
+                completion(error: nil, set: set)
+                return
+            }
+            guard let data = data else {
+                completion(error: AppDelegate.errorWithString("No data in response", code: .WallabeeError), set: nil)
+                return
+            }
+            let set = SBSet(dictionary: data, bee: s)
+            setsCache[id] = set
+            completion(error: nil, set: set)
+        }
+    }
+    
+    func itemType(type : Int, completion : (error : NSError?, type : SBItemType?) -> Void) {
+        if let itemType = itemTypesCache[type]
+        {
+            completion(error: nil, type: itemType)
+            return
+        }
+        get("/itemtypes/\(type)") { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            if let error = error {
+                completion(error: error, type: nil)
+                return
+            }
+            guard let data = data else {
+                completion(error: AppDelegate.errorWithString("No data in response", code: .WallabeeError), type: nil)
+                return
+            }
+            let itemType = SBItemType(dictionary: data, bee: s)
+            itemTypesCache[type] = itemType
+            completion(error: nil, type: itemType)
+        }
+    }
+    
+    func market(completion : (error: NSError?, items : [SBMarketItem]?) -> Void) {
+        fetchMarket([SBMarketItem](), page: 1, completion: completion)
+    }
+    
+    func fetchMarket(existing : [SBMarketItem], page : Int, completion : (error: NSError?, items : [SBMarketItem]?) -> Void) {
+        var existingMutable = existing
+        print("Fetching market page \(page)")
+        get("/market", parameters: [ "page" : "\(page)"]) { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            if let error = error {
+                completion(error: error, items: nil)
+                return
+            }
+            guard let data = data else {
+                completion(error: AppDelegate.errorWithString("No data in response", code: .WallabeeError), items: nil)
+                return
+            }
+            if let itemsDictionary = data["items"] as? [ [String : AnyObject] ] {
+                for itemDictionary in itemsDictionary {
+                    existingMutable.append(SBMarketItem(dictionary: itemDictionary, bee: s))
+                }
+            }
+            if let paging = data["paging"] as? [ String : AnyObject ], totalPages = paging["total_pages"] as? String, totalPagesInt = Int(totalPages) {
+                if totalPagesInt > page {
+                    s.fetchMarket(existingMutable, page: page+1, completion: completion)
+                    return
+                }
+            }
+            completion(error: nil, items: existingMutable)
         }
     }
     

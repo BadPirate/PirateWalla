@@ -51,6 +51,26 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         getNearby()
     }
     
+    func addNumericalSetting(alert : UIAlertController, key : String, zero : String, title : String, description : String) {
+        let value = NSUserDefaults.standardUserDefaults().integerForKey(key) == 0 ? zero : "\(NSUserDefaults.standardUserDefaults().integerForKey(key))"
+        alert.addAction(UIAlertAction(title: "\(title) - \(value)", style: .Default, handler: { [weak self] (_) -> Void in
+            let alert = UIAlertController(title: title, message: description, preferredStyle: .Alert)
+            alert.addTextFieldWithConfigurationHandler({ (textField) -> Void in
+                textField.keyboardType = .NumberPad
+                textField.text = "\(NSUserDefaults.standardUserDefaults().integerForKey(key))"
+            })
+            alert.addAction(UIAlertAction(title: "Set", style: .Default, handler: { _ -> Void in
+                if let value = Int(alert.textFields![0].text ?? "0")
+                {
+                    NSUserDefaults.standardUserDefaults().setInteger(value, forKey: key)
+                    NSUserDefaults.standardUserDefaults().synchronize()
+                    self?.reload()
+                }
+            }))
+            self?.presentViewController(alert, animated: true, completion: nil)
+            }))
+    }
+    
     @IBAction func settings() {
         let alert = UIAlertController(title: "Settings", message: nil, preferredStyle: .ActionSheet)
         alert.addAction(UIAlertAction(title: "Logout", style: .Default, handler: { [weak self] _ -> Void in
@@ -58,6 +78,8 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             self?.login()
             self?.reload()
         }))
+        addNumericalSetting(alert, key: "minImprovement", zero: "0", title: "Min Improvement", description: "Minimum amount items should be improved before showing in list, 0 for no minimum")
+        addNumericalSetting(alert, key: "maxPrice", zero: "No Max", title: "Max Market", description: "Maximum market price per item, 0 for no maximum")
         alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
         self.presentViewController(alert, animated: true, completion: nil)
     }
@@ -192,50 +214,161 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         }
     }
     
-    func parseItems(items: [SBItem]?, place : SBPlace)
+    func parseItems(items: [SBItemBase], place : SBPlace?)
     {
-        guard let items = items, savedItems = savedItems else { return }
+        guard let savedItems = savedItems else { return }
         var missingItems = [SBItem]()
         var improvedItems = [SBItem]()
+        var missingMarket = [SBMarketItem]()
+        var improvedMarket = [SBMarketItem]()
+        
+        let minImprovement = NSUserDefaults.standardUserDefaults().integerForKey("minImprovement")
         for item in items {
             // Missing?
             if savedItems[item.itemTypeID] == nil {
-                if item.locked {
-                    print("Missing but locked - \(item.name)")
-                    continue
-                }
-                else
-                {
+                if let item = item as? SBItem {
+                    if item.locked {
+                        print("Missing but locked - \(item.name)")
+                        continue
+                    }
                     print("Missing - \(item.name)")
                     missingItems.append(item)
+                }
+                else if let item = item as? SBMarketItem {
+                    print("Missing market - \(item)")
+                    missingMarket.append(item)
                 }
             }
             
             // Improved?
             if let savedItem = savedItems[item.itemTypeID] {
-                if item.number < savedItem.number {
-                    if item.locked {
-                        print("Improved but locked - \(item.name)")
-                        continue
-                    }
-                    else
-                    {
+                if item.number + minImprovement < savedItem.number {
+                    if let item = item as? SBItem {
+                        if item.locked {
+                            print("Improved but locked - \(item.name)")
+                            continue
+                        }
                         print("Improved - \(item.name)")
                         improvedItems.append(item)
+                    }
+                    else if let item = item as? SBMarketItem {
+                        print("Improved market - \(item)")
+                        improvedMarket.append(item)
                     }
                 }
             }
         }
-        if missingItems.count > 0 {
-            let pickupRow = PickupRow(place: place, items: missingItems, kindLabel: "missing")
-            missingSection.pendingRows.append(pickupRow)
-            shouldUpdateSections()
+        if let place = place {
+            if missingItems.count > 0 {
+                let pickupRow = PickupRow(place: place, items: missingItems, kindLabel: "missing")
+                missingSection.pendingRows.append(pickupRow)
+                shouldUpdateSections()
+            }
+            if improvedItems.count > 0 {
+                let pickupRow = PickupRow(place: place, items: improvedItems, kindLabel: "improved")
+                improveSection.pendingRows.append(pickupRow)
+                shouldUpdateSections()
+            }
         }
-        if improvedItems.count > 0 {
-            let pickupRow = PickupRow(place: place, items: improvedItems, kindLabel: "improved")
-            improveSection.pendingRows.append(pickupRow)
-            shouldUpdateSections()
+        if missingMarket.count > 0 {
+            startedActivity()
+            
+            groupItemsBySet(missingMarket, completion: { [weak self] (error, groups) -> Void in
+                self?.stoppedActivity()
+                guard let s = self, groups = groups else { return }
+                if let _ = error { return }
+                for (set, items) in groups {
+                    s.missingSection.pendingRows.append(MarketRow(set: set, items: items, kindLabel: "missing"))
+                    s.shouldUpdateSections()
+                }
+            })
         }
+        if improvedMarket.count > 0 {
+            startedActivity()
+            groupItemsBySet(improvedMarket, completion: { [weak self] (error, groups) -> Void in
+                self?.stoppedActivity()
+                if let _ = error { return }
+                guard let s = self, groups = groups else { return }
+                for (set, items) in groups {
+                    s.improveSection.pendingRows.append(MarketRow(set: set, items: items, kindLabel: "improved"))
+                    s.shouldUpdateSections()
+                }
+            })
+        }
+    }
+    
+    func groupItemsBySet(items: [SBItemBase], completion : (error : NSError?, groups : [ SBSet : [SBItem] ]?) -> Void)
+    {
+        var index = 0
+        
+        var groups = [ SBSet : [SBItem] ]()
+        
+        // Make sure they all have set information
+        for baseItem in items {
+            // Need enhanced items
+            guard let item = baseItem as? SBItem else {
+                startedActivity()
+                baseItem.enhance({ [weak self] (error, enhancedItem) -> Void in
+                    self?.stoppedActivity()
+                    if let error = error {
+                        completion(error: error, groups: nil)
+                        return
+                    }
+                    guard let s = self, enhancedItem = enhancedItem else { return }
+                    var itemsMutable = items
+                    itemsMutable.removeAtIndex(index)
+                    itemsMutable.append(enhancedItem)
+                    s.groupItemsBySet(itemsMutable, completion: completion)
+                })
+                return
+            }
+            
+            // Sets need to be cached
+            if setsCache[item.setID] == nil {
+                startedActivity()
+                bee.set(item.setID, completion: { [weak self] (error, set) -> Void in
+                    self?.stoppedActivity()
+                    guard let s = self else { return }
+                    if let error = error {
+                        print("Skipping item - \(item) error - \(error) unable to retrieve set \(item.setID)")
+                        var mutableItems = items
+                        mutableItems.removeAtIndex(index)
+                        s.groupItemsBySet(mutableItems, completion: completion)
+                        return
+                    }
+                    s.groupItemsBySet(items, completion: completion) // Try again.
+                })
+                return
+            }
+            let set = setsCache[item.setID]!
+            if var groupedItems = groups[set] {
+                var index = 0
+                var dup = false
+                for groupedItem in groupedItems {
+                    if groupedItem.itemTypeID == item.itemTypeID {
+                        if groupedItem.number > item.number {
+                            groupedItems.removeAtIndex(index)
+                            continue
+                        }
+                        else {
+                            dup = true
+                            break
+                        }
+                    }
+                    index++
+                }
+                if !dup {
+                    groupedItems.append(item)
+                }
+                groups[set] = groupedItems
+            }
+            else
+            {
+                groups[set] = [item]
+            }
+            index++
+        }
+        completion(error: nil, groups: groups)
     }
     
     func refreshList() {
@@ -264,18 +397,19 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 s.startedActivity()
                 place.items({ [weak s] (error, items) -> Void in
                     s?.stoppedActivity()
-                    guard let s = s else { return }
+                    guard let s = s, items = items else { return }
                     s.parseItems(items, place: place)
                 })
             }
         }
         
+        // Check Nearby
         print("Refreshing list User - \(user.id) - Nearby \(nearby.count) - Saved Items \(savedItems.count)")
         for place in nearby {
             startedActivity()
             place.items({ [weak self] (error, items) -> Void in
                 self?.stoppedActivity()
-                guard let s = self, let snb = s.nearby else { return }
+                guard let s = self, let snb = s.nearby, items = items else { return }
                 if snb != nearby { return }
                 if let error = error {
                     AppDelegate.handleError(error, completion: { () -> Void in })
@@ -283,6 +417,26 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 }
                 s.parseItems(items, place: place)
             })
+        }
+        
+        // Check the Market
+        startedActivity()
+        bee.market { [weak self] (error, items) -> Void in
+            self?.stoppedActivity()
+            guard let s = self else { return }
+            if error != nil { return }
+            if let items = items {
+                let maxPrice = NSUserDefaults.standardUserDefaults().integerForKey("maxPrice")
+                var foundItems = [SBMarketItem]()
+                for item in items {
+                    if maxPrice > 0 && item.cost > maxPrice {
+                        print("Market item found, but overpriced \(item)")
+                        continue
+                    }
+                    foundItems.append(item)
+                }
+                s.parseItems(foundItems, place: nil)
+            }
         }
     }
     
@@ -425,13 +579,51 @@ class ActionRow {
     }
 }
 
-class PickupRow : ActionRow {
-    let place : SBPlace
+class ItemRow : ActionRow {
     let items : [SBItem]
+    let bee : SwiftBee
+    init(items : [SBItem], bee: SwiftBee) {
+        self.items = items
+        self.bee = bee
+    }
+}
+
+class MarketRow : ItemRow {
+    let set : SBSet
+    init(set : SBSet, items : [SBItem], kindLabel : String) {
+        self.set = set
+        super.init(items: items, bee: set.bee)
+        reuse = "market"
+        setup = { cell,_ in
+            if let cell = cell as? MarketCell {
+                cell.row = self
+                cell.detailLabel!.text = "\(items.count) \(kindLabel) item\(items.count == 1 ? "" : "s")"
+            }
+        }
+        select = { tableView, indexPath in
+            tableView.deselectRowAtIndexPath(indexPath, animated: true)
+            if NSUserDefaults.standardUserDefaults().boolForKey("marketWarned") != true {
+                let alert = UIAlertController(title: "Market Items", message: "Piratewalla can't jump you right into the Market view at this time (Yet), you'll need to manually go into the appropriate part of the market on your own for now", preferredStyle: .Alert)
+                alert.addAction(UIAlertAction(title: "Got it", style: .Default, handler: { (_) -> Void in
+                    UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
+                }))
+                if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {
+                    rootVC.presentViewController(alert, animated: true, completion: nil)
+                }
+                NSUserDefaults.standardUserDefaults().setBool(true, forKey: "marketWarned")
+                NSUserDefaults.standardUserDefaults().synchronize()
+                return
+            }
+            UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
+        }
+    }
+}
+
+class PickupRow : ItemRow {
+    let place : SBPlace
     init(place : SBPlace, items : [SBItem], kindLabel : String) {
         self.place = place
-        self.items = items
-        super.init()
+        super.init(items: items, bee: place.bee)
         reuse = "pickup"
         setup = { cell,_ in
             if let cell = cell as? PickupCell {
@@ -466,16 +658,106 @@ class PickupRow : ActionRow {
     }
 }
 
-class PickupCell : UITableViewCell, CLLocationManagerDelegate {
+class ItemCell : UITableViewCell {
     @IBOutlet var itemsStack : UIStackView?
     @IBOutlet var placeImageView : UIImageView?
     @IBOutlet var label : UILabel?
     @IBOutlet var detailLabel : UILabel?
     
+    func cleanup() {
+        itemsStack!.subviews.forEach { (view) -> () in
+            view.removeFromSuperview()
+        }
+        placeImageView!.image = nil
+        label!.text = nil
+        detailLabel!.text = nil
+    }
+    
+    var imageSize : Int {
+        get {
+            return UIScreen.mainScreen().scale == 1.0 ? 50 : 100
+        }
+    }
+    
+    var scale : CGFloat {
+        get {
+            return CGFloat(imageSize) / CGFloat(50)
+        }
+    }
+    
+    var row : ItemRow?
+    
+    func updateItemStack() {
+        guard let row = row else { return }
+        for item in row.items {
+            let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
+            if let url = item.imageURL(imageSize) {
+                item.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
+                    guard let s = self else { return }
+                    if s.row !== row { return }
+                    if let error = error {
+                        print("Error loading image - \(error)")
+                        return
+                    }
+                    if let data = data {
+                        dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                            imageView.image = UIImage(data: data, scale: s.scale)
+                        })
+                    }
+                    }).resume()
+            }
+            itemsStack!.addArrangedSubview(imageView)
+        }
+        itemsStack!.sizeToFit()
+    }
+    
+    func setPlaceImage(url : NSURL) {
+        guard let row = row else { return }
+        row.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
+            guard let s = self else { return }
+            if s.row !== row { return }
+            if let error = error {
+                print("Error loading image - \(error)")
+                return
+            }
+            if let data = data {
+                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    s.placeImageView!.image = UIImage(data: data, scale: s.scale)
+                })
+            }
+            }).resume()
+    }
+}
+
+class MarketCell : ItemCell {
+    var marketRow : MarketRow? {
+        get { return row as? MarketRow }
+    }
+    
+    override var row : ItemRow? {
+        didSet {
+            cleanup()
+            if let row = row as? MarketRow {
+                updateItemStack()
+                if let url = row.set.imageURL(imageSize) {
+                    setPlaceImage(url)
+                }
+                label!.text = row.set.name
+            }
+        }
+    }
+}
+
+class PickupCell : ItemCell, CLLocationManagerDelegate {
     let locationManager = CLLocationManager()
     
     override func awakeFromNib() {
         locationManager.delegate = self
+    }
+    
+    override func cleanup() {
+        super.cleanup()
+        withinRange = true
     }
     
     func locationManager(manager: CLLocationManager, didUpdateToLocation newLocation: CLLocation, fromLocation oldLocation: CLLocation) {
@@ -483,7 +765,7 @@ class PickupCell : UITableViewCell, CLLocationManagerDelegate {
     }
     
     func checkLocation() {
-        guard let row = row, userLocation = locationManager.location else { return }
+        guard let row = pickupRow, userLocation = locationManager.location else { return }
         if row.place.id == helicarrierID { withinRange = true; return }
         let location = CLLocation(latitude: row.place.location.latitude, longitude: row.place.location.longitude)
         withinRange = location.distanceFromLocation(userLocation) < row.place.radius + userLocation.horizontalAccuracy
@@ -498,55 +780,25 @@ class PickupCell : UITableViewCell, CLLocationManagerDelegate {
         }
     }
     
-    var row : PickupRow? {
+    override func prepareForReuse() {
+        cleanup()
+    }
+    
+    var pickupRow : PickupRow? {
+        return row as? PickupRow
+    }
+    
+    override var row : ItemRow? {
         didSet {
             // Cleanup
-            itemsStack!.subviews.forEach { (view) -> () in
-                view.removeFromSuperview()
-            }
+            cleanup()
             locationManager.stopUpdatingLocation()
-            if let row = row {
+            if let row = row as? PickupRow {
                 checkLocation()
                 locationManager.startUpdatingLocation()
-                var imageSize = 100
-                if UIScreen.mainScreen().scale == 1.0 {
-                    imageSize = 50
-                }
-                let scale = CGFloat(imageSize) / CGFloat(50)
-                for item in row.items {
-                    let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
-                    if let url = item.imageURL(imageSize) {
-                        item.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
-                            guard let s = self else { return }
-                            if s.row !== row { return }
-                            if let error = error {
-                                print("Error loading image - \(error)")
-                                return
-                            }
-                            if let data = data {
-                                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                                    imageView.image = UIImage(data: data, scale: scale)
-                                })
-                            }
-                        }).resume()
-                    }
-                    itemsStack!.addArrangedSubview(imageView)
-                }
-                itemsStack!.sizeToFit()
+                updateItemStack()
                 if let url = row.place.imageURL(imageSize) {
-                    row.place.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
-                        guard let s = self else { return }
-                        if s.row !== row { return }
-                        if let error = error {
-                            print("Error loading image - \(error)")
-                            return
-                        }
-                        if let data = data {
-                            dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                                s.placeImageView!.image = UIImage(data: data, scale: scale)
-                            })
-                        }
-                    }).resume()
+                    setPlaceImage(url)
                 }
                 label!.text = row.place.name
             }

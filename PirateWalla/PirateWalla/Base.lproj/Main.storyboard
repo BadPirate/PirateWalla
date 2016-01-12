@@ -85,6 +85,76 @@
                                     <outlet property="placeImageView" destination="cWo-6d-yHG" id="8s8-D0-och"/>
                                 </connections>
                             </tableViewCell>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="market" id="jrB-ip-TuS" userLabel="market" customClass="MarketCell" customModule="PirateWalla" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="180" width="600" height="66"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="jrB-ip-TuS" id="lWJ-5T-D5o">
+                                    <rect key="frame" x="0.0" y="0.0" width="600" height="65"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="y3g-CZ-gVN">
+                                            <rect key="frame" x="8" y="9" width="584" height="49"/>
+                                            <subviews>
+                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="Qp0-8n-yx9" userLabel="Items Stack">
+                                                    <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
+                                                    <subviews>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Km-fw-byy">
+                                                            <rect key="frame" x="0.0" y="0.0" width="50" height="49"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="50" id="oHt-Ul-EBW"/>
+                                                            </constraints>
+                                                        </imageView>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wgl-Lq-PVE">
+                                                            <rect key="frame" x="58" y="0.0" width="50" height="49"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="50" id="VZB-oM-gvi"/>
+                                                            </constraints>
+                                                        </imageView>
+                                                    </subviews>
+                                                </stackView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="market" translatesAutoresizingMaskIntoConstraints="NO" id="xc5-39-xUU">
+                                                    <rect key="frame" x="116" y="15" width="16" height="20"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="16" id="Enj-cS-CDb"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dEA-hz-1ip" userLabel="Place Image">
+                                                    <rect key="frame" x="140" y="0.0" width="50" height="49"/>
+                                                </imageView>
+                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="Sth-5q-JTp" userLabel="Description Stack">
+                                                    <rect key="frame" x="198" y="4" width="386" height="42"/>
+                                                    <subviews>
+                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Logic High Software" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KeD-kj-Fta" userLabel="Label">
+                                                            <rect key="frame" x="0.0" y="0.0" width="155" height="21"/>
+                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                            <nil key="highlightedColor"/>
+                                                        </label>
+                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="3 Missing Items" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="96L-iA-L8S" userLabel="Detail Label">
+                                                            <rect key="frame" x="0.0" y="21" width="120" height="21"/>
+                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                            <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                                                            <nil key="highlightedColor"/>
+                                                        </label>
+                                                    </subviews>
+                                                </stackView>
+                                            </subviews>
+                                        </stackView>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="y3g-CZ-gVN" firstAttribute="top" secondItem="lWJ-5T-D5o" secondAttribute="topMargin" id="7UD-6A-OMs"/>
+                                        <constraint firstAttribute="bottomMargin" secondItem="y3g-CZ-gVN" secondAttribute="bottom" id="9oX-Qy-dkD"/>
+                                        <constraint firstAttribute="trailingMargin" secondItem="y3g-CZ-gVN" secondAttribute="trailing" id="glg-sh-lUj"/>
+                                        <constraint firstItem="y3g-CZ-gVN" firstAttribute="leading" secondItem="lWJ-5T-D5o" secondAttribute="leadingMargin" id="lEu-xx-eV7"/>
+                                    </constraints>
+                                </tableViewCellContentView>
+                                <connections>
+                                    <outlet property="detailLabel" destination="96L-iA-L8S" id="22s-r3-6Vw"/>
+                                    <outlet property="itemsStack" destination="Qp0-8n-yx9" id="tbp-x8-lsd"/>
+                                    <outlet property="label" destination="KeD-kj-Fta" id="F6Z-ta-aqJ"/>
+                                    <outlet property="placeImageView" destination="dEA-hz-1ip" id="aDy-xI-BbL"/>
+                                </connections>
+                            </tableViewCell>
                         </prototypes>
                         <connections>
                             <outlet property="dataSource" destination="uuH-gm-8Bj" id="1Uk-WZ-1Zb"/>
@@ -129,6 +199,7 @@
     </scenes>
     <resources>
         <image name="map_marker" width="16" height="26"/>
+        <image name="market" width="28" height="20"/>
         <image name="settings" width="26" height="26"/>
     </resources>
 </document>

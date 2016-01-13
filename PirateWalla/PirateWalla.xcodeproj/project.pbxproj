@@ -18,6 +18,8 @@
 		B4EB74871C3D8B65009885C7 /* SBItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EB74861C3D8B65009885C7 /* SBItem.swift */; };
 		B4F382231C44248600274826 /* SBSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F382221C44248600274826 /* SBSet.swift */; };
 		B4F382251C44273300274826 /* SBItemType.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F382241C44273300274826 /* SBItemType.swift */; };
+		B4F382281C455CAF00274826 /* CloudCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F382271C455CAF00274826 /* CloudCache.swift */; };
+		B4F3822B1C455D5B00274826 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B4F3822A1C455D5B00274826 /* CloudKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +37,9 @@
 		B4EB74861C3D8B65009885C7 /* SBItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SBItem.swift; sourceTree = "<group>"; };
 		B4F382221C44248600274826 /* SBSet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SBSet.swift; sourceTree = "<group>"; };
 		B4F382241C44273300274826 /* SBItemType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SBItemType.swift; sourceTree = "<group>"; };
+		B4F382271C455CAF00274826 /* CloudCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CloudCache.swift; sourceTree = "<group>"; };
+		B4F382291C455D5500274826 /* PirateWalla.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PirateWalla.entitlements; sourceTree = "<group>"; };
+		B4F3822A1C455D5B00274826 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +47,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B4F3822B1C455D5B00274826 /* CloudKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -51,6 +57,7 @@
 		B4EB74551C3CE8B5009885C7 = {
 			isa = PBXGroup;
 			children = (
+				B4F3822A1C455D5B00274826 /* CloudKit.framework */,
 				B4EB74601C3CE8B5009885C7 /* PirateWalla */,
 				B4EB745F1C3CE8B5009885C7 /* Products */,
 			);
@@ -67,9 +74,11 @@
 		B4EB74601C3CE8B5009885C7 /* PirateWalla */ = {
 			isa = PBXGroup;
 			children = (
+				B4F382291C455D5500274826 /* PirateWalla.entitlements */,
 				B4EB747F1C3D6AC6009885C7 /* PirateWalla-Bridging-Header.h */,
 				B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */,
 				B4EB74671C3CE8B5009885C7 /* Main.storyboard */,
+				B4F382271C455CAF00274826 /* CloudCache.swift */,
 				B4EB747A1C3D6530009885C7 /* ActionTVC.swift */,
 				B4EB746A1C3CE8B5009885C7 /* Assets.xcassets */,
 				B4EB746C1C3CE8B5009885C7 /* LaunchScreen.storyboard */,
@@ -125,6 +134,11 @@
 					B4EB745D1C3CE8B5009885C7 = {
 						CreatedOnToolsVersion = 7.2;
 						DevelopmentTeam = GZ2N47M83H;
+						SystemCapabilities = {
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -167,6 +181,7 @@
 				B4EB74791C3CEC58009885C7 /* SBUser.swift in Sources */,
 				B4F382251C44273300274826 /* SBItemType.swift in Sources */,
 				B4F382231C44248600274826 /* SBSet.swift in Sources */,
+				B4F382281C455CAF00274826 /* CloudCache.swift in Sources */,
 				B4EB747B1C3D6530009885C7 /* ActionTVC.swift in Sources */,
 				B4EB747D1C3D6890009885C7 /* SBPlace.swift in Sources */,
 				B4EB74871C3D8B65009885C7 /* SBItem.swift in Sources */,
@@ -285,6 +300,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = PirateWalla/PirateWalla.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				INFOPLIST_FILE = PirateWalla/Info.plist;
@@ -302,6 +318,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = PirateWalla/PirateWalla.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				INFOPLIST_FILE = PirateWalla/Info.plist;

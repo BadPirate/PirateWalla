@@ -32,6 +32,33 @@ class SBMarketItem : SBItemBase {
             return Int(data["cost"] as? String ?? "0") ?? 0
         }
     }
+    
+    func enhance(completion : (error : NSError?, enhancedItem : SBEnhancedMarketItem?) -> Void) {
+        bee.itemType(itemTypeID) { [weak self] (error, type) -> Void in
+            guard let s = self else { return }
+            if let error = error {
+                completion(error: error, enhancedItem: nil)
+                return
+            }
+            let type = type!
+            let enhanced = s.enhanceWithItemType(type)
+            completion(error: nil, enhancedItem: enhanced)
+        }
+    }
+    
+    func enhanceWithItemType(itemType : SBItemType) -> SBEnhancedMarketItem {
+        var enhancedData = itemType.data
+        for (key, value) in data {
+            enhancedData[key] = value
+        }
+        return SBEnhancedMarketItem(dictionary: enhancedData, bee: bee)
+    }
+    
+    override var shortDescription : String {
+        get {
+            return "\(self.dynamicType) - type \(itemTypeID)"
+        }
+    }
 }
 
 class SBEnhancedMarketItem : SBItem {
@@ -79,19 +106,18 @@ class SBItemBase : SBObject {
         }
     }
     
-    func enhance(completion : (error : NSError?, enhancedItem : SBEnhancedMarketItem?) -> Void) {
-        bee.itemType(itemTypeID) { [weak self] (error, type) -> Void in
-            guard let s = self else { return }
-            if let error = error {
-                completion(error: error, enhancedItem: nil)
-                return
+    var itemID : Int {
+        get {
+            return Int(data["item_id"] as! String)!
+        }
+    }
+    
+    override var id : Int {
+        get {
+            if let idString = data["id"] as? String {
+                return Int(idString)!
             }
-            let type = type!
-            var enhancedData = type.data
-            for (key, value) in s.data {
-                enhancedData[key] = value
-            }
-            completion(error: nil, enhancedItem: SBEnhancedMarketItem(dictionary: enhancedData, bee: s.bee))
+            return itemID
         }
     }
 }

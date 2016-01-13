@@ -9,9 +9,6 @@
 import Foundation
 import CoreLocation
 
-var itemTypesCache = [ Int : SBItemType ]()
-var setsCache = [ Int : SBSet ]()
-
 class SwiftBee {
     let gateTime : NSTimeInterval = 0.25
     let session : NSURLSession
@@ -44,16 +41,11 @@ class SwiftBee {
     }
     
     func set(id : Int, completion : (error : NSError?, set : SBSet?) -> Void) {
-        if let set = setsCache[id] {
-            completion(error: nil, set: set)
-            return
-        }
         get("/sets/\(id)") { [weak self] (error, data) -> Void in
             guard let s = self else { return }
             if let error = error {
                 print("Error retrieving set - \(id) - \(error)")
-                let set = SBSet.errorSet(s)
-                setsCache[id] = set
+                let set = SBSet.errorSet(id, bee: s)
                 completion(error: nil, set: set)
                 return
             }
@@ -62,17 +54,11 @@ class SwiftBee {
                 return
             }
             let set = SBSet(dictionary: data, bee: s)
-            setsCache[id] = set
             completion(error: nil, set: set)
         }
     }
     
     func itemType(type : Int, completion : (error : NSError?, type : SBItemType?) -> Void) {
-        if let itemType = itemTypesCache[type]
-        {
-            completion(error: nil, type: itemType)
-            return
-        }
         get("/itemtypes/\(type)") { [weak self] (error, data) -> Void in
             guard let s = self else { return }
             if let error = error {
@@ -84,7 +70,6 @@ class SwiftBee {
                 return
             }
             let itemType = SBItemType(dictionary: data, bee: s)
-            itemTypesCache[type] = itemType
             completion(error: nil, type: itemType)
         }
     }
@@ -211,7 +196,13 @@ class SBObject : CustomStringConvertible, Hashable {
     
     var id : Int {
         get {
-            return Int(data["id"] as? String ?? "0") ?? 0
+            if let idString = data["id"] as? String, id = Int(idString) {
+                return id
+            }
+            else {
+                print("Object has no ID Set - \(self)")
+                return 0
+            }
         }
     }
     
@@ -224,6 +215,12 @@ class SBObject : CustomStringConvertible, Hashable {
     var hashValue: Int {
         get {
             return self.id + object_getClassName(self).hashValue
+        }
+    }
+    
+    var shortDescription : String {
+        get {
+            return "\(self.dynamicType) - \(self.id)"
         }
     }
 }

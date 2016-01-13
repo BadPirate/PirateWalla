@@ -9,8 +9,9 @@
 import Foundation
 
 class SBSet : SBObject {
-    class func errorSet(bee: SwiftBee) -> SBSet {
-        return SBSet(dictionary: [ "name" : "Error" ], bee: bee)
+    class func errorSet(identifier : Int, bee: SwiftBee) -> SBSet {
+        print("Error set - \(identifier)")
+        return SBSet(dictionary: [ "id" : "\(identifier)", "name" : "Error" ], bee: bee)
     }
     
     func imageURL(size: Int) -> NSURL? {
@@ -24,6 +25,25 @@ class SBSet : SBObject {
     var name : String {
         get {
             return data["name"] as? String ?? "Error"
+        }
+    }
+    
+    var setID : Int {
+        if let idString = data["id"] as? String {
+            return Int(idString)!
+        }
+        return Int(data["set_id"] as! String)!
+    }
+    
+    override var id : Int {
+        get {
+            return setID
+        }
+    }
+    
+    override var shortDescription : String {
+        get {
+            return super.shortDescription + " - \(name)"
         }
     }
 }

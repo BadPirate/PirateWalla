@@ -55,6 +55,16 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         getNearby()
     }
     
+    func addToggleSetting(alert : UIAlertController, setting : String, description: String, onAction: String, offAction: String) {
+        let value = NSUserDefaults.standardUserDefaults().boolForKey(setting)
+        let stateString = value ? offAction : onAction
+        alert.addAction(UIAlertAction(title: "\(stateString) \(description)" , style: .Default, handler: { [weak self] (_) -> Void in
+            NSUserDefaults.standardUserDefaults().setBool(!value, forKey: setting)
+            NSUserDefaults.standardUserDefaults().synchronize()
+            self?.reload()
+        }))
+    }
+    
     func addNumericalSetting(alert : UIAlertController, key : String, zero : String, title : String, description : String) {
         let value = NSUserDefaults.standardUserDefaults().integerForKey(key) == 0 ? zero : "\(NSUserDefaults.standardUserDefaults().integerForKey(key))"
         alert.addAction(UIAlertAction(title: "\(title) - \(value)", style: .Default, handler: { [weak self] (_) -> Void in
@@ -75,16 +85,20 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             }))
     }
     
-    @IBAction func settings() {
+    @IBAction func settings(sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Settings", message: nil, preferredStyle: .ActionSheet)
-        alert.addAction(UIAlertAction(title: "Logout", style: .Default, handler: { [weak self] _ -> Void in
-            self?.logout()
-            self?.login()
-            self?.reload()
-            }))
+        addToggleSetting(alert, setting: "disableNearbySearch", description: "nearby", onAction: "Don't search", offAction: "Search")
         addNumericalSetting(alert, key: "minImprovement", zero: "0", title: "Min Improvement", description: "Minimum amount items should be improved before showing in list, 0 for no minimum")
         addNumericalSetting(alert, key: "maxPrice", zero: "No Max", title: "Max Market", description: "Maximum market price per item, 0 for no maximum")
         alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+        if let presenter = alert.popoverPresentationController{
+            presenter.barButtonItem = sender
+        }
+        alert.addAction(UIAlertAction(title: "Logout", style: .Default, handler: { [weak self] _ -> Void in
+            guard let s = self else { return }
+            s.logout()
+            s.login()
+        }))
         self.presentViewController(alert, animated: true, completion: nil)
     }
     
@@ -115,11 +129,15 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         progressView.progress = totalActivities == 0 ? Float(0) : Float(finishedActivities) / Float(totalActivities)
     }
     
-    @IBAction func reload() {
+    func reset() {
         clearRows()
         nearby = nil
         savedItems = nil
         refreshing = false
+    }
+    
+    @IBAction func reload() {
+        reset()
         getNearby()
         getSavedItems()
     }
@@ -127,6 +145,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     func logout() {
         NSUserDefaults.standardUserDefaults().removeObjectForKey("id")
         NSUserDefaults.standardUserDefaults().synchronize()
+        user = nil
+        navigationItem.title = "Logged Out"
+        reset()
     }
     
     func login() {
@@ -184,6 +205,11 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     func getNearby() {
+        if NSUserDefaults.standardUserDefaults().boolForKey("disableNearbySearch") == true {
+            nearby = [SBPlace]()
+            refreshList()
+            return
+        }
         switch CLLocationManager.authorizationStatus() {
         case .AuthorizedAlways:
             break;
@@ -682,10 +708,20 @@ class ItemCell : UITableViewCell {
     
     var row : ItemRow?
     
+    var blankImage : UIImage {
+        get {
+            UIGraphicsBeginImageContextWithOptions(CGSizeMake(50, 50), false, 0.0);
+            let blank = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            return blank
+        }
+    }
+    
     func updateItemStack() {
         guard let row = row else { return }
         for item in row.items {
             let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
+            imageView.image = blankImage
             if let url = item.imageURL(imageSize) {
                 item.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
                     guard let s = self else { return }
@@ -708,6 +744,7 @@ class ItemCell : UITableViewCell {
     
     func setPlaceImage(url : NSURL) {
         guard let row = row else { return }
+        placeImageView!.image = blankImage
         row.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
             guard let s = self else { return }
             if s.row !== row { return }

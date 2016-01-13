@@ -13,7 +13,8 @@ import CoreLocation
 let helicarrierID = 1728050
 
 class ActionTVC : UITableViewController, CLLocationManagerDelegate {
-    lazy var bee : SwiftBee = SwiftBee()
+    let bee : SwiftBee
+    let cloudCache : CloudCache
     let locationManager = CLLocationManager()
     let progressView  = UIProgressView(progressViewStyle: .Bar)
     
@@ -37,6 +38,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         missingSection = ActionSection(title: "Missing Items")
         improveSection = ActionSection(title: "Improved Items")
         sections = [missingSection, improveSection]
+        let bee = SwiftBee()
+        self.bee = bee
+        self.cloudCache = CloudCache(bee: bee)
         super.init(coder: aDecoder)
     }
     
@@ -219,8 +223,8 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         guard let savedItems = savedItems else { return }
         var missingItems = [SBItem]()
         var improvedItems = [SBItem]()
-        var missingMarket = [SBMarketItem]()
-        var improvedMarket = [SBMarketItem]()
+        var missingMarket = Set<SBMarketItem>()
+        var improvedMarket = Set<SBMarketItem>()
         
         let minImprovement = NSUserDefaults.standardUserDefaults().integerForKey("minImprovement")
         for item in items {
@@ -236,7 +240,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 }
                 else if let item = item as? SBMarketItem {
                     print("Missing market - \(item)")
-                    missingMarket.append(item)
+                    missingMarket.insert(item)
                 }
             }
             
@@ -252,8 +256,8 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                         improvedItems.append(item)
                     }
                     else if let item = item as? SBMarketItem {
-                        print("Improved market - \(item)")
-                        improvedMarket.append(item)
+                        print("Improved market - \(item.shortDescription)")
+                        improvedMarket.insert(item)
                     }
                 }
             }
@@ -272,13 +276,12 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         }
         if missingMarket.count > 0 {
             startedActivity()
-            
             groupItemsBySet(missingMarket, completion: { [weak self] (error, groups) -> Void in
                 self?.stoppedActivity()
                 guard let s = self, groups = groups else { return }
                 if let _ = error { return }
                 for (set, items) in groups {
-                    s.missingSection.pendingRows.append(MarketRow(set: set, items: items, kindLabel: "missing"))
+                    s.missingSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "missing"))
                     s.shouldUpdateSections()
                 }
             })
@@ -290,85 +293,62 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 if let _ = error { return }
                 guard let s = self, groups = groups else { return }
                 for (set, items) in groups {
-                    s.improveSection.pendingRows.append(MarketRow(set: set, items: items, kindLabel: "improved"))
+                    s.improveSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "improved"))
                     s.shouldUpdateSections()
                 }
             })
         }
     }
     
-    func groupItemsBySet(items: [SBItemBase], completion : (error : NSError?, groups : [ SBSet : [SBItem] ]?) -> Void)
+    func groupItemsBySet(items: Set<SBMarketItem>, completion : (error : NSError?, groups : [ SBSet : Set<SBItem> ]?) -> Void)
     {
-        var index = 0
-        
-        var groups = [ SBSet : [SBItem] ]()
-        
-        // Make sure they all have set information
-        for baseItem in items {
-            // Need enhanced items
-            guard let item = baseItem as? SBItem else {
-                startedActivity()
-                baseItem.enhance({ [weak self] (error, enhancedItem) -> Void in
-                    self?.stoppedActivity()
-                    if let error = error {
-                        completion(error: error, groups: nil)
-                        return
-                    }
-                    guard let s = self, enhancedItem = enhancedItem else { return }
-                    var itemsMutable = items
-                    itemsMutable.removeAtIndex(index)
-                    itemsMutable.append(enhancedItem)
-                    s.groupItemsBySet(itemsMutable, completion: completion)
-                })
+        startedActivity()
+        cloudCache.enhance(items) { [weak self] (error, items) -> Void in
+            guard let s = self else { return }
+            s.stoppedActivity()
+            if let error = error {
+                completion(error: error, groups: nil)
                 return
             }
-            
-            // Sets need to be cached
-            if setsCache[item.setID] == nil {
-                startedActivity()
-                bee.set(item.setID, completion: { [weak self] (error, set) -> Void in
-                    self?.stoppedActivity()
-                    guard let s = self else { return }
-                    if let error = error {
-                        print("Skipping item - \(item) error - \(error) unable to retrieve set \(item.setID)")
-                        var mutableItems = items
-                        mutableItems.removeAtIndex(index)
-                        s.groupItemsBySet(mutableItems, completion: completion)
-                        return
-                    }
-                    s.groupItemsBySet(items, completion: completion) // Try again.
-                })
-                return
-            }
-            let set = setsCache[item.setID]!
-            if var groupedItems = groups[set] {
-                var index = 0
-                var dup = false
-                for groupedItem in groupedItems {
-                    if groupedItem.itemTypeID == item.itemTypeID {
-                        if groupedItem.number > item.number {
-                            groupedItems.removeAtIndex(index)
-                            continue
-                        }
-                        else {
-                            dup = true
+            let items = items!
+            var groupedBySetIdentifier = [ Int : Set<SBItem> ]()
+            for item in items {
+                if let group = groupedBySetIdentifier[item.setID] {
+                    var mutableGroup = group
+                    var found = false
+                    for groupItem in group {
+                        if groupItem.itemTypeID == item.itemTypeID {
+                            found = true
                             break
                         }
                     }
-                    index++
+                    if found { continue }
+                    mutableGroup.insert(item)
+                    groupedBySetIdentifier[item.setID] = mutableGroup
                 }
-                if !dup {
-                    groupedItems.append(item)
+                else
+                {
+                    var group = Set<SBItem>()
+                    group.insert(item)
+                    groupedBySetIdentifier[item.setID] = group
                 }
-                groups[set] = groupedItems
             }
-            else
-            {
-                groups[set] = [item]
-            }
-            index++
+
+            s.cloudCache.sets(Set(groupedBySetIdentifier.keys), completion: { [weak s] (error, sets) -> Void in
+                guard let s = s else { return }
+                s.stoppedActivity()
+                if let error = error {
+                    completion(error: error, groups: nil)
+                    return
+                }
+                var groups = [ SBSet : Set<SBItem> ]()
+                let sets = sets!
+                for set in sets {
+                    groups[set] = groupedBySetIdentifier[set.id]
+                }
+                completion(error: nil, groups: groups)
+            })
         }
-        completion(error: nil, groups: groups)
     }
     
     func refreshList() {

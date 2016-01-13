@@ -81,7 +81,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             self?.logout()
             self?.login()
             self?.reload()
-        }))
+            }))
         addNumericalSetting(alert, key: "minImprovement", zero: "0", title: "Min Improvement", description: "Minimum amount items should be improved before showing in list, 0 for no minimum")
         addNumericalSetting(alert, key: "maxPrice", zero: "No Max", title: "Max Market", description: "Maximum market price per item, 0 for no maximum")
         alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
@@ -108,7 +108,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             willUpdateProgress = true;
             dispatch_async(dispatch_get_main_queue(), { [weak self] () -> Void in
                 self?.updateProgress()
-            })
+                })
             return
         }
         willUpdateProgress = false
@@ -211,7 +211,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 section.rows.removeAll()
                 rowsRemoved = true
             }
-            section.pendingRows.removeAll()
+            dispatch_sync(section.pendingRowLock, { () -> Void in
+                section.pendingRows.removeAll()
+            })
         }
         if rowsRemoved {
             tableView.reloadData()
@@ -239,7 +241,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     missingItems.append(item)
                 }
                 else if let item = item as? SBMarketItem {
-                    print("Missing market - \(item)")
+                    print("Missing market - \(item.shortDescription)")
                     missingMarket.insert(item)
                 }
             }
@@ -265,12 +267,16 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         if let place = place {
             if missingItems.count > 0 {
                 let pickupRow = PickupRow(place: place, items: missingItems, kindLabel: "missing")
-                missingSection.pendingRows.append(pickupRow)
+                dispatch_sync(missingSection.pendingRowLock, { () -> Void in
+                    self.missingSection.pendingRows.append(pickupRow)
+                })
                 shouldUpdateSections()
             }
             if improvedItems.count > 0 {
                 let pickupRow = PickupRow(place: place, items: improvedItems, kindLabel: "improved")
-                improveSection.pendingRows.append(pickupRow)
+                dispatch_sync(improveSection.pendingRowLock, { () -> Void in
+                    self.improveSection.pendingRows.append(pickupRow)
+                })
                 shouldUpdateSections()
             }
         }
@@ -281,10 +287,12 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 guard let s = self, groups = groups else { return }
                 if let _ = error { return }
                 for (set, items) in groups {
-                    s.missingSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "missing"))
+                    dispatch_sync(s.missingSection.pendingRowLock, { () -> Void in
+                        s.missingSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "missing"))
+                    })
                     s.shouldUpdateSections()
                 }
-            })
+                })
         }
         if improvedMarket.count > 0 {
             startedActivity()
@@ -293,10 +301,12 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 if let _ = error { return }
                 guard let s = self, groups = groups else { return }
                 for (set, items) in groups {
-                    s.improveSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "improved"))
+                    dispatch_sync(s.improveSection.pendingRowLock, { () -> Void in
+                        s.improveSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "improved"))
+                    })
                     s.shouldUpdateSections()
                 }
-            })
+                })
         }
     }
     
@@ -333,7 +343,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     groupedBySetIdentifier[item.setID] = group
                 }
             }
-
+            
             s.cloudCache.sets(Set(groupedBySetIdentifier.keys), completion: { [weak s] (error, sets) -> Void in
                 guard let s = s else { return }
                 s.stoppedActivity()
@@ -347,7 +357,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     groups[set] = groupedBySetIdentifier[set.id]
                 }
                 completion(error: nil, groups: groups)
-            })
+                })
         }
     }
     
@@ -356,7 +366,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             dispatch_sync(dispatch_get_main_queue(), { [weak self] () -> Void in
                 guard let s = self else { return }
                 s.refreshList()
-            })
+                })
             return
         }
         
@@ -367,7 +377,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         refreshing = true
         
         clearRows()
-
+        
         // Check the Helicarrier
         startedActivity()
         bee.place(helicarrierID) { [weak self] (error, place) -> Void in
@@ -379,7 +389,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     s?.stoppedActivity()
                     guard let s = s, items = items else { return }
                     s.parseItems(items, place: place)
-                })
+                    })
             }
         }
         
@@ -396,7 +406,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     return
                 }
                 s.parseItems(items, place: place)
-            })
+                })
         }
         
         // Check the Market
@@ -410,7 +420,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 var foundItems = [SBMarketItem]()
                 for item in items {
                     if maxPrice > 0 && item.cost > maxPrice {
-                        print("Market item found, but overpriced \(item)")
+                        print("Market item found, but overpriced \(item.shortDescription)")
                         continue
                     }
                     foundItems.append(item)
@@ -434,12 +444,14 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         tableView.beginUpdates()
         var sectionOn = 0
         for section in sections {
-            while section.pendingRows.count > 0 {
-                let index = NSIndexPath(forRow: section.rows.count, inSection: sectionOn)
-                tableView.insertRowsAtIndexPaths([index], withRowAnimation: .Automatic)
-                section.rows.append(section.pendingRows.first!)
-                section.pendingRows.removeFirst()
-            }
+            dispatch_sync(section.pendingRowLock, { () -> Void in
+                while section.pendingRows.count > 0 {
+                    let index = NSIndexPath(forRow: section.rows.count, inSection: sectionOn)
+                    self.tableView.insertRowsAtIndexPaths([index], withRowAnimation: .Automatic)
+                    section.rows.append(section.pendingRows.first!)
+                    section.pendingRows.removeFirst()
+                }
+            })
             sectionOn++
         }
         tableView.endUpdates()
@@ -509,7 +521,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 AppDelegate.handleError(error, completion: { [weak s] () -> Void in
                     guard let s = s else { return }
                     s.nearbyForLocation(location)
-                })
+                    })
                 return
             }
             s.nearby = places
@@ -544,10 +556,13 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
 
 class ActionSection {
     let title : String
+    let pendingRowLock : dispatch_queue_t
+    
     var rows : [ ActionRow ] = [ActionRow]()
     var pendingRows : [ ActionRow ] = [ActionRow]()
     init(title : String) {
         self.title = title
+        self.pendingRowLock = dispatch_queue_create("actionTVC.\(title)", nil)
     }
 }
 

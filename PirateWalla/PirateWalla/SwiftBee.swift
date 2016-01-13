@@ -80,7 +80,6 @@ class SwiftBee {
     
     func fetchMarket(existing : [SBMarketItem], page : Int, completion : (error: NSError?, items : [SBMarketItem]?) -> Void) {
         var existingMutable = existing
-        print("Fetching market page \(page)")
         get("/market", parameters: [ "page" : "\(page)"]) { [weak self] (error, data) -> Void in
             guard let s = self else { return }
             if let error = error {
@@ -96,10 +95,12 @@ class SwiftBee {
                     existingMutable.append(SBMarketItem(dictionary: itemDictionary, bee: s))
                 }
             }
-            if let paging = data["paging"] as? [ String : AnyObject ], totalPages = paging["total_pages"] as? String, totalPagesInt = Int(totalPages) {
-                if totalPagesInt > page {
-                    s.fetchMarket(existingMutable, page: page+1, completion: completion)
-                    return
+            if let paging = data["paging"] as? [ String : AnyObject ] {
+                if let totalPages = paging["total_pages"] as? Int {
+                    if totalPages > page {
+                        s.fetchMarket(existingMutable, page: page+1, completion: completion)
+                        return
+                    }
                 }
             }
             completion(error: nil, items: existingMutable)
@@ -130,6 +131,7 @@ class SwiftBee {
         gate { [weak self] () -> Void in
             guard let s = self
                 else { return }
+            print("GET - \(path)")
             let request = NSMutableURLRequest(URL: NSURL(string: "https://api.wallab.ee/\(path)")!)
             request.addValue("4f92cb2f-c9f4-4af6-b648-493b4d4902ab", forHTTPHeaderField: "X-WallaBee-API-Key")
             let task = s.session.dataTaskWithRequest(request, completionHandler: { (data : NSData?, response : NSURLResponse?, error : NSError?) -> Void in
@@ -137,7 +139,13 @@ class SwiftBee {
                 var e = error;
                 if let data = data {
                     do {
-                        result = try NSJSONSerialization.JSONObjectWithData(data, options: []) as? [ String : AnyObject ]
+                        let parsed = try NSJSONSerialization.JSONObjectWithData(data, options: [])
+                        guard let tryResult = parsed as? [ String : AnyObject ] else {
+                            let error = AppDelegate.errorWithString("Result wrong format, expecting [ String : AnyObject ] got - \(parsed.dynamicType)", code: .WallabeeError)
+                            completion(error: error, data: nil)
+                            return
+                        }
+                        result = tryResult
                     } catch let error as NSError {
                         print("JSON error: \(error) -- Data - \(data)")
                         e = error

@@ -41,7 +41,14 @@ class SwiftBee {
     }
     
     func set(id : Int, completion : (error : NSError?, set : SBSet?) -> Void) {
-        get("/sets/\(id)") { [weak self] (error, data) -> Void in
+        var path : String? = nil
+        switch id {
+        case 20:
+            path = "/branded"
+        default:
+            path = "/sets/\(id)"
+        }
+        get(path!) { [weak self] (error, data) -> Void in
             guard let s = self else { return }
             if let error = error {
                 print("Error retrieving set - \(id) - \(error)")
@@ -49,9 +56,12 @@ class SwiftBee {
                 completion(error: nil, set: set)
                 return
             }
-            guard let data = data else {
+            guard var data = data else {
                 completion(error: AppDelegate.errorWithString("No data in response", code: .WallabeeError), set: nil)
                 return
+            }
+            if id == 20 {
+                data["id"] = "20"
             }
             let set = SBSet(dictionary: data, bee: s)
             completion(error: nil, set: set)

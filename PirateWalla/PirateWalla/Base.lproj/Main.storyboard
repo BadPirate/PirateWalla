@@ -165,7 +165,7 @@
                     <navigationItem key="navigationItem" title="Root View Controller" id="MXS-cH-Ao0">
                         <barButtonItem key="leftBarButtonItem" image="settings" id="k4e-HD-ZdF">
                             <connections>
-                                <action selector="settings" destination="uuH-gm-8Bj" id="wLl-BJ-ZAE"/>
+                                <action selector="settings:" destination="uuH-gm-8Bj" id="G3D-2Z-NVH"/>
                             </connections>
                         </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" systemItem="refresh" id="bUn-ZG-DAX">

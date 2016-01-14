@@ -42,7 +42,10 @@
                                                         </imageView>
                                                     </subviews>
                                                 </stackView>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="map_marker" translatesAutoresizingMaskIntoConstraints="NO" id="TgW-IR-54X">
+                                                <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="tlu-VH-2Pn">
+                                                    <rect key="frame" x="112" y="22" width="0.0" height="6"/>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="map_marker" translatesAutoresizingMaskIntoConstraints="NO" id="TgW-IR-54X">
                                                     <rect key="frame" x="116" y="12" width="16" height="26"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="16" id="V9o-rQ-FQT"/>
@@ -82,6 +85,7 @@
                                     <outlet property="detailLabel" destination="5zP-Zg-lPo" id="o6m-6c-TRj"/>
                                     <outlet property="itemsStack" destination="1JT-bO-SdO" id="iak-wv-kpc"/>
                                     <outlet property="label" destination="VbR-6x-vGg" id="1wP-cA-VKK"/>
+                                    <outlet property="moreImageView" destination="tlu-VH-2Pn" id="h6s-PL-lng"/>
                                     <outlet property="placeImageView" destination="cWo-6d-yHG" id="8s8-D0-och"/>
                                 </connections>
                             </tableViewCell>
@@ -112,7 +116,10 @@
                                                         </imageView>
                                                     </subviews>
                                                 </stackView>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="market" translatesAutoresizingMaskIntoConstraints="NO" id="xc5-39-xUU">
+                                                <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="eDC-Ic-BFu">
+                                                    <rect key="frame" x="112" y="22" width="0.0" height="6"/>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="market" translatesAutoresizingMaskIntoConstraints="NO" id="xc5-39-xUU">
                                                     <rect key="frame" x="116" y="15" width="16" height="20"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="16" id="Enj-cS-CDb"/>
@@ -152,6 +159,7 @@
                                     <outlet property="detailLabel" destination="96L-iA-L8S" id="22s-r3-6Vw"/>
                                     <outlet property="itemsStack" destination="Qp0-8n-yx9" id="tbp-x8-lsd"/>
                                     <outlet property="label" destination="KeD-kj-Fta" id="F6Z-ta-aqJ"/>
+                                    <outlet property="moreImageView" destination="eDC-Ic-BFu" id="kJA-PY-80n"/>
                                     <outlet property="placeImageView" destination="dEA-hz-1ip" id="aDy-xI-BbL"/>
                                 </connections>
                             </tableViewCell>
@@ -200,6 +208,7 @@
     <resources>
         <image name="map_marker" width="16" height="26"/>
         <image name="market" width="28" height="20"/>
+        <image name="more" width="28" height="6"/>
         <image name="settings" width="26" height="26"/>
     </resources>
 </document>

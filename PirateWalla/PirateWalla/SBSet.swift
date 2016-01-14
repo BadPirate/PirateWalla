@@ -24,7 +24,17 @@ class SBSet : SBObject {
     
     var name : String {
         get {
-            return data["name"] as? String ?? "Error"
+            if id == 25 {
+                return "Unique Items"
+            }
+            if let name = data["name"] as? String {
+                return name
+            }
+            else
+            {
+                print("Set has no name - \(id)")
+                return "Error"
+            }
         }
     }
     

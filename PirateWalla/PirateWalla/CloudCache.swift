@@ -132,7 +132,13 @@ class CloudCache {
                     stillMissing.remove(object.id)
                     cache(object: object)
                     if let updated = record.modificationDate {
-                        if -updated.timeIntervalSinceNow > refresh {
+                        var errorPresent = false
+                        if let set = object as? SBSet {
+                            if set.data["name"] == nil {
+                                errorPresent = true
+                            }
+                        }
+                        if -updated.timeIntervalSinceNow > refresh || errorPresent {
                             s.updateObject(object.id, record: record, recordType: recordType, retrieve: retrieve, cache: cache, completion: { _,_ -> Void in })
                         }
                     }

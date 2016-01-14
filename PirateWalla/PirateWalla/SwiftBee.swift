@@ -45,6 +45,8 @@ class SwiftBee {
         switch id {
         case 20:
             path = "/branded"
+        case 25:
+            path = "/uniqueitems"
         default:
             path = "/sets/\(id)"
         }
@@ -60,9 +62,7 @@ class SwiftBee {
                 completion(error: AppDelegate.errorWithString("No data in response", code: .WallabeeError), set: nil)
                 return
             }
-            if id == 20 {
-                data["id"] = "20"
-            }
+            data["id"] = "\(id)"
             let set = SBSet(dictionary: data, bee: s)
             completion(error: nil, set: set)
         }
@@ -146,7 +146,11 @@ class SwiftBee {
             request.addValue("4f92cb2f-c9f4-4af6-b648-493b4d4902ab", forHTTPHeaderField: "X-WallaBee-API-Key")
             let task = s.session.dataTaskWithRequest(request, completionHandler: { (data : NSData?, response : NSURLResponse?, error : NSError?) -> Void in
                 var result : [ String : AnyObject ]? = nil
-                var e = error;
+                if let error = error {
+                    completion(error: error, data: nil)
+                    return
+                }
+                var e : NSError? = nil;
                 if let data = data {
                     do {
                         let parsed = try NSJSONSerialization.JSONObjectWithData(data, options: [])

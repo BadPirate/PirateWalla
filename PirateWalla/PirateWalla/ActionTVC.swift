@@ -89,6 +89,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     @IBAction func settings(sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Settings", message: nil, preferredStyle: .ActionSheet)
         addToggleSetting(alert, setting: "disableNearbySearch", description: "nearby", onAction: "Don't search", offAction: "Search")
+        addToggleSetting(alert, setting: "disableMarketSearch", description: "Market", onAction: "Don't search", offAction: "Search")
         addNumericalSetting(alert, key: "minImprovement", zero: "0", title: "Min Improvement", description: "Minimum amount items should be improved before showing in list, 0 for no minimum")
         addNumericalSetting(alert, key: "maxPrice", zero: "No Max", title: "Max Market", description: "Maximum market price per item, 0 for no maximum")
         alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
@@ -441,23 +442,25 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 })
         }
         
-        // Check the Market
-        startedActivity()
-        bee.market { [weak self] (error, items) -> Void in
-            self?.stoppedActivity()
-            guard let s = self else { return }
-            if error != nil { return }
-            if let items = items {
-                let maxPrice = NSUserDefaults.standardUserDefaults().integerForKey("maxPrice")
-                var foundItems = [SBMarketItem]()
-                for item in items {
-                    if maxPrice > 0 && item.cost > maxPrice {
-                        print("Market item found, but overpriced \(item.shortDescription)")
-                        continue
+        if NSUserDefaults.standardUserDefaults().boolForKey("disableMarketSearch") == false {
+            // Check the Market
+            startedActivity()
+            bee.market { [weak self] (error, items) -> Void in
+                self?.stoppedActivity()
+                guard let s = self else { return }
+                if error != nil { return }
+                if let items = items {
+                    let maxPrice = NSUserDefaults.standardUserDefaults().integerForKey("maxPrice")
+                    var foundItems = [SBMarketItem]()
+                    for item in items {
+                        if maxPrice > 0 && item.cost > maxPrice {
+                            print("Market item found, but overpriced \(item.shortDescription)")
+                            continue
+                        }
+                        foundItems.append(item)
                     }
-                    foundItems.append(item)
+                    s.parseItems(foundItems, place: nil)
                 }
-                s.parseItems(foundItems, place: nil)
             }
         }
     }
@@ -663,7 +666,7 @@ class PickupRow : ItemRow {
         setup = { cell,_ in
             if let cell = cell as? PickupCell {
                 cell.row = self
-                cell.detailLabel!.text = "\(items.count) \(kindLabel) item\(items.count == 1 ? "" : "s")"
+                cell.detailText = "\(items.count) \(kindLabel) item\(items.count == 1 ? "" : "s")"
             }
         }
         select = { tableView, indexPath in
@@ -811,18 +814,34 @@ class PickupCell : ItemCell, CLLocationManagerDelegate {
     }
     
     func checkLocation() {
-        guard let row = pickupRow, userLocation = locationManager.location else { return }
-        if row.place.id == helicarrierID { withinRange = true; return }
+        withinRange = distanceForPickup() <= 0
+    }
+    
+    func distanceForPickup() -> Double {
+        guard let row = pickupRow, userLocation = locationManager.location else { return 0 }
+        if row.place.id == helicarrierID { return 0 }
         let location = CLLocation(latitude: row.place.location.latitude, longitude: row.place.location.longitude)
-        withinRange = location.distanceFromLocation(userLocation) < row.place.radius + userLocation.horizontalAccuracy
+        return location.distanceFromLocation(userLocation) - row.place.radius + userLocation.horizontalAccuracy
     }
     
     var withinRange : Bool = true {
         didSet {
             if oldValue == withinRange { return } // No change
-            detailLabel!.enabled = withinRange
-            label!.enabled = withinRange
-            backgroundColor! = withinRange ? UIColor.whiteColor() : UIColor.lightGrayColor()
+            updateState()
+        }
+    }
+    
+    func updateState() {
+        detailLabel!.enabled = withinRange
+        label!.enabled = withinRange
+        detailLabel!.text = withinRange ? detailText : "Too far away to pickup (\(distanceForPickup())m)"
+        backgroundColor! = withinRange ? UIColor.whiteColor() : UIColor.lightGrayColor()
+    }
+    
+    
+    var detailText : String? {
+        didSet {
+            updateState()
         }
     }
     

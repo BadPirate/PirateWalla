@@ -826,7 +826,6 @@ class PickupCell : ItemCell, CLLocationManagerDelegate {
     
     var withinRange : Bool = true {
         didSet {
-            if oldValue == withinRange { return } // No change
             updateState()
         }
     }
@@ -834,7 +833,7 @@ class PickupCell : ItemCell, CLLocationManagerDelegate {
     func updateState() {
         detailLabel!.enabled = withinRange
         label!.enabled = withinRange
-        detailLabel!.text = withinRange ? detailText : "Too far away to pickup (\(distanceForPickup())m)"
+        detailLabel!.text = withinRange ? detailText : "(\(Int(distanceForPickup()))m) Too far away to pickup"
         backgroundColor! = withinRange ? UIColor.whiteColor() : UIColor.lightGrayColor()
     }
     

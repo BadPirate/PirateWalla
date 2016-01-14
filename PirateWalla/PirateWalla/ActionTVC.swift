@@ -701,6 +701,7 @@ class ItemCell : UITableViewCell {
     @IBOutlet var placeImageView : UIImageView?
     @IBOutlet var label : UILabel?
     @IBOutlet var detailLabel : UILabel?
+    @IBOutlet var moreImageView : UIImageView?
     
     func cleanup() {
         itemsStack!.subviews.forEach { (view) -> () in
@@ -709,6 +710,32 @@ class ItemCell : UITableViewCell {
         placeImageView!.image = nil
         label!.text = nil
         detailLabel!.text = nil
+    }
+    
+    override var frame : CGRect {
+        didSet {
+            collapseStack()
+        }
+    }
+    
+    func collapseStack() {
+        guard let itemsStack = self.itemsStack else { return }
+        var shouldShowMore = false
+        if itemsStack.subviews.count > 0 {
+            let showItems = min(Int(floor(frame.size.width / 90)),itemsStack.subviews.count)
+            for item in itemsStack.subviews[0..<showItems] {
+                item.hidden = false
+            }
+            if itemsStack.subviews.count > showItems {
+                shouldShowMore = true
+                for item in itemsStack.subviews[showItems..<itemsStack.subviews.count] {
+                    item.hidden = true
+                }
+            }
+        }
+        if !shouldShowMore != moreImageView!.hidden {
+            moreImageView!.hidden = !shouldShowMore
+        }
     }
     
     var imageSize : Int {

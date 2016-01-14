@@ -33,6 +33,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     var nearby : [ SBPlace ]?
     var savedItems : [ Int : SBSavedItem ]?
     var refreshing = false
+    var refreshLocation = false
     
     required init?(coder aDecoder: NSCoder) {
         missingSection = ActionSection(title: "Missing Items")
@@ -226,6 +227,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             return
         }
         
+        if let currentLocation = locationManager.location {
+            refreshLocation = true
+            nearbyForLocation(currentLocation)
+        }
         locationManager.startUpdatingLocation()
     }
     
@@ -396,8 +401,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             return
         }
         
-        guard let user = user, nearby = nearby, savedItems = savedItems
-            else { return }
+        guard let user = user else { print("Waiting for user (\(self.user)) data before refresh"); return }
+        guard let nearby = nearby else { print("Waiting for nearby (\(self.nearby)) information before refresh"); return }
+        guard let savedItems = savedItems else { print("Waiting for savedItems (\(self.savedItems)) information before refresh"); return }
         
         if refreshing { return }
         refreshing = true
@@ -535,6 +541,14 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func locationManager(manager: CLLocationManager, didUpdateToLocation newLocation: CLLocation, fromLocation oldLocation: CLLocation) {
         locationManager.stopUpdatingLocation()
+        if (refreshLocation) {
+            refreshLocation = false;
+            if oldLocation.distanceFromLocation(newLocation) > 500
+            {
+                nearbyForLocation(newLocation)
+            }
+            return
+        }
         nearbyForLocation(newLocation)
     }
     

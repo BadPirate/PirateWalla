@@ -46,28 +46,166 @@ class CloudCache {
         
         let missing = missingItemTypes
         let recordType = itemTypeRecordType
-        let refresh = itemTypeRefresh
-        let objectInit = { (dictionary : [ String : AnyObject], bee: SwiftBee) -> SBObject in
-            return SBItemType(dictionary: dictionary, bee: bee)
-        }
-        let cache = { (object : SBObject) -> Void in
-            guard let itemType = object as? SBItemType else { return }
-            self.itemTypeCache[itemType.id] = itemType
-        }
-        let retrieve = { [weak self] (identifier : Int, completion : (error : NSError?, SBObject?) -> Void) -> Void in
-            self?.bee.itemType(identifier, completion: { (error, type) -> Void in
-                completion(error: error, type)
-            })
-        }
-        cloudSwap(missing, recordType: recordType, refresh: refresh, objectInit: objectInit, retrieve: retrieve, cache: cache) { [weak self] (error) -> Void in
-            if let error = error {
-                completion(error: error, nil)
+        let cache = self.itemTypeCache as [Int : SBObject]
+        objectsWithIdentifiers(missing, recordType: recordType, cache: cache) { (error, objects, cache) -> Void in
+            if let cache = cache as? [Int : SBItemType] {
+                var enhancedItems = Set<SBItem>()
+                for baseItem in baseItems {
+                    let enhancedItem = baseItem.enhanceWithItemType(cache[baseItem.itemTypeID]!)
+                    enhancedItems.insert(enhancedItem)
+                }
+                self.itemTypeCache = cache
+                completion(error: nil, enhancedItems)
                 return
             }
-            self?.enhance(baseItems, completion: completion)
+            completion(error: error, nil)
         }
     }
     
+    func objectsWithIdentifiers(identifiers: Set<Int>, recordType: String, cache : [ Int : SBObject ], completion : (error : NSError?, objects : Set<SBObject>?, updateCache: [Int : SBObject]?) -> Void)
+    {
+        var cache = cache
+        var retrieved = Set<SBObject>()
+        var missing = identifiers
+        
+        // Check the cache
+        for identifier in identifiers {
+            if let object = cache[identifier] {
+                retrieved.insert(object)
+                missing.remove(identifier)
+            }
+        }
+        
+        if missing.count == 0 {
+            // Great, they were all cached!
+            completion(error: nil, objects: retrieved, updateCache: cache)
+            return
+        }
+        
+        // Fooey, check the cloud
+        publicQueryIdIn(missing, recordType: recordType) { [weak self] (records, error) -> Void in
+            guard let s = self else { return }
+            if let error = error {
+                completion(error: error, objects: nil, updateCache: nil)
+                return
+            }
+            
+            var activities = 0
+            
+            var updatedRecords = Set<Int>()
+            
+            if let records = records {
+                for record in records {
+                    guard let asset = record["data"] as? CKAsset, dictionary = NSKeyedUnarchiver.unarchiveObjectWithFile(asset.fileURL.path!) as? [ String : AnyObject ] else { fatalError("Record data corrupted") }
+                    var temp : SBObject?
+                    
+                    switch recordType {
+                    case "Set":
+                        temp = SBSet(dictionary: dictionary, bee: s.bee)
+                    case "ItemType":
+                        temp = SBItemType(dictionary: dictionary, bee: s.bee)
+                    default:
+                        fatalError("Unhandled record type objectsWithIdentifiers \(recordType)")
+                    }
+                    let object = temp!
+                    cache[object.id] = object // Cache it for next time
+                    let recordName = "\(object.dynamicType)-\(object.id)"
+                    if recordName != record.recordID.recordName {
+                        if !updatedRecords.contains(object.id) {
+                            updatedRecords.insert(object.id)
+                            print("Updating record name - \(record.recordID.recordName) != \(recordName)")
+                            let updated = CKRecord(recordType: recordType, recordID: CKRecordID(recordName: recordName))
+                            let updatedAsset = CKAsset(fileURL: (record["data"] as! CKAsset).fileURL)
+                            updated["data"] = updatedAsset
+                            updated["id"] = record["id"]
+                            s.publicDatabase.saveRecord(updated, completionHandler: { (_,error) -> Void in
+                                if let error = error {
+                                    print("Error creating updated record \(recordName) - \(error)")
+                                }
+                            })
+                        }
+                        else
+                        {
+                            print("Deleting duplicate record - \(record.recordID.recordName)")
+                        }
+                        s.publicDatabase.deleteRecordWithID(record.recordID, completionHandler: { (_, error) -> Void in
+                            if let error = error {
+                                print("Error deleting updated record \(record.recordID.recordName) - \(error)")
+                            }
+                        })
+                    }
+                    missing.remove(object.id)
+                    retrieved.insert(object)
+                }
+            }
+            
+            if missing.count == 0 {
+                // We got them all from the cloud! Yay!
+                completion(error: nil, objects: retrieved, updateCache: cache)
+                return
+            }
+            
+            // Okay, go and get them from Wallabee I guess
+            let retrievalLock = dispatch_queue_create("Object Retrieval", nil)
+            var cancel = false
+            
+            let handler = { [weak self] (error : NSError?, object: SBObject?) in
+                guard let s = self else { return }
+                dispatch_sync(retrievalLock, { () -> Void in
+                    if cancel { return }
+                    if let error = error {
+                        cancel = true
+                        completion(error: error, objects: nil, updateCache: nil)
+                        return
+                    }
+                    let object = object!
+                    retrieved.insert(object)
+                    cache[object.id] = object
+                    s.saveObject(object, recordType: recordType, completion: { (error) -> Void in
+                        if let error = error {
+                            print("Error saving \(object) - \(error)")
+                            return
+                        }
+                    })
+                    activities--
+                    if activities == 0 {
+                        completion(error: nil, objects: retrieved, updateCache: cache)
+                    }
+                })
+            }
+            
+            activities++ // So that there isn't a race where completion can get called twice.
+            for identifier in missing {
+                // retrieve(identifier : Int, bee : SwiftBee, completion : (error : NSError?, object : SBObject?) -> Void
+                switch recordType {
+                case "Set":
+                    dispatch_sync(retrievalLock, { () -> Void in
+                        activities++
+                    })
+                    s.bee.set(identifier, completion: { (error, set) -> Void in
+                        handler(error, set)
+                    })
+                case "ItemType":
+                    dispatch_sync(retrievalLock, { () -> Void in
+                        activities++
+                    })
+                    s.bee.itemType(identifier, completion: { (error, type) -> Void in
+                        handler(error, type)
+                    })
+                default:
+                    fatalError("Object retrival doesn't support \(recordType)")
+                }
+            }
+            
+            dispatch_sync(retrievalLock, { () -> Void in
+                if activities == 0 {
+                    completion(error: nil, objects: retrieved, updateCache: cache)
+                }
+            })
+        }
+    }
+
+
     func publicQuery(query: CKQuery, completionHandler: ([CKRecord]?, NSError?) -> Void) {
         publicDatabase.performQuery(query, inZoneWithID: nil) { (record, error) -> Void in
             if let error = error {
@@ -87,44 +225,60 @@ class CloudCache {
         }
     }
     
-    func publicQueryIdIn(identifiers : Set<Int>, recordType : String, existing : [CKRecord]?, completion : ([CKRecord]?, NSError?) -> Void) {
-        var array = Array(identifiers)
-        var result = existing != nil ? existing! : [CKRecord]()
+    func publicQueryIdIn(identifiers : Set<Int>, recordType : String, completion : ([CKRecord]?, NSError?) -> Void) {
+        let queryResolutionLock = dispatch_queue_create("ID Query Lock", nil)
         
-        let end : Int = min(array.count,50)
-        let partial = array[0..<end]
-        let predicate = NSPredicate(format: "id in %@", Array(partial))
-        let query = CKQuery(recordType: recordType, predicate: predicate)
-        print("Querying DB for \(partial.count) \(recordType) records")
-        publicQuery(query, completionHandler: { [weak self] (records, error) -> Void in
-            guard let s = self else { return }
-            if let error = error {
-                completion(nil, error)
-                return
-            }
-            let records = records!
-            print("Query returned \(records.count) results for \(recordType)")
-            result.appendContentsOf(records)
-            if array.count == end {
-                completion(result,nil)
-            }
-            else
-            {
-                let remainder = Set(array[end..<array.count])
-                s.publicQueryIdIn(remainder, recordType: recordType, existing: result, completion: completion)
-            }
-        })
+        var array = Array(identifiers)
+        var result = [CKRecord]()
+        var activities = 0
+        var cancel = false
+        
+        let perRequest = 50
+        let parts = Int(ceil(Float(array.count)/Float(perRequest)))
+        
+        for head in 0..<parts {
+            let start = head*perRequest
+            let end = min(array.count,start+perRequest)
+            let partial = array[start..<end]
+            let predicate = NSPredicate(format: "id in %@", Array(partial))
+            let query = CKQuery(recordType: recordType, predicate: predicate)
+            
+            dispatch_sync(queryResolutionLock, { () -> Void in
+                print("Beginning ID Query request \(start) -> \(end-1)")
+                activities++
+            })
+            publicQuery(query, completionHandler: { (records, error) -> Void in
+                dispatch_sync(queryResolutionLock, { () -> Void in
+                    if cancel { return }
+                    if let error = error {
+                        completion(nil, error)
+                        cancel = true
+                        return
+                    }
+                    if let records = records {
+                        print("Query for \(start) -> \(end-1) returned \(records.count) records")
+                        result.appendContentsOf(records)
+                    }
+                    activities--
+                    if activities == 0 {
+                        print("Completed ID Query - \(result.count) records retrieved")
+                        completion(result,nil)
+                    }
+                })
+            })
+        }
     }
     
     func cloudSwap(missing : Set<Int>, recordType : String, refresh : NSTimeInterval, objectInit : (dictionary : [ String : AnyObject], bee: SwiftBee) -> SBObject, retrieve : (identifier : Int, completion: (error : NSError?, object : SBObject?) -> Void) -> Void, cache : (object : SBObject) -> Void, completion : (error : NSError?) -> Void) {
         // Retrieve from Public Cloud and store any missing sets into memcache and then call again
-        publicQueryIdIn(missing, recordType: recordType, existing: nil, completion:  { [weak self] (records, error) -> Void in
+        publicQueryIdIn(missing, recordType: recordType, completion:  { [weak self] (records, error) -> Void in
             guard let s = self else { return }
             if let error = error {
                 print("Error performing cloudkit query -  \(error)")
                 completion(error: error)
                 return
             }
+            
             var stillMissing = missing
             for record in records! {
                 if let asset = record["data"] as? CKAsset, data = NSKeyedUnarchiver.unarchiveObjectWithFile(asset.fileURL.path!) as? [ String : AnyObject ] {
@@ -183,38 +337,43 @@ class CloudCache {
     
     func sets(setIdentifiers : Set<Int>, completion : (error : NSError?, Set<SBSet>?) -> Void)
     {
-        var missingSets = Set<Int>()
-        var sets = Set<SBSet>()
-        
-        // Check memory cache
-        for setIdentifier in setIdentifiers {
-            if let set = setsCache[setIdentifier] {
-                sets.insert(set)
+        let cache = setsCache as [Int : SBObject]
+        objectsWithIdentifiers(setIdentifiers, recordType: "Set", cache: cache) { [weak self] (error, objects, cache) -> Void in
+            guard let s = self else { return }
+            var result : Set<SBSet>?
+            if let objects = objects as? Set<SBSet> {
+                result = objects
             }
-            else
-            {
-                missingSets.insert(setIdentifier)
+            if let cache = cache as? [Int : SBSet] {
+                s.setsCache = cache
             }
+            completion(error: error, result)
         }
-        if missingSets.count == 0 {
-            completion(error: nil, sets)
-            return
-        }
-        
-        let objectInit = { (dictionary : [ String : AnyObject], bee: SwiftBee) -> SBObject in
-            return SBSet(dictionary: dictionary, bee: bee)
-        }
-        let cache = { (object : SBObject) -> Void in
-            guard let set = object as? SBSet else { return }
-            self.setsCache[set.id] = set
-        }
-        let retrieve = { [weak self] (identifier : Int, completion : (error : NSError?, SBObject?) -> Void) -> Void in
-            self?.bee.set(identifier, completion: { (error, set) -> Void in
-                completion(error: error, set)
+    }
+    
+    func saveObject(object : SBObject, recordType: String, completion: (error : NSError?) -> Void) {
+        let path = temporaryFileURL()
+        if NSKeyedArchiver.archiveRootObject(object.data, toFile: path.path!) {
+            let recordName = "\(object.dynamicType)-\(object.id)"
+            let record = CKRecord(recordType: recordType, recordID: CKRecordID(recordName: recordName))
+            record["data"] = CKAsset(fileURL: path)
+            record["id"] = object.id
+            if object.id == 0 {
+                print("Object expected to respond to id - \(object)")
+                return
+            }
+            print("Updating record to cloud - \(object.shortDescription)")
+            publicDatabase.saveRecord(record, completionHandler: { (_, error) -> Void in
+                if let error = error {
+                    print("Error saving record \(record) to cloud - \(error)")
+                }
             })
         }
-        cloudSwap(missingSets, recordType: setRecordType, refresh: setRefresh, objectInit: objectInit, retrieve: retrieve, cache: cache) { [weak self] (error) -> Void in
-            self?.sets(setIdentifiers, completion: completion)
+        else
+        {
+            let error = AppDelegate.errorWithString("Unable to save cloudkit data file", code: .FileSystemError)
+            completion(error: error)
+            return
         }
     }
     
@@ -229,29 +388,9 @@ class CloudCache {
             }
             if let object = object {
                 cache(object: object)
-                let path = s.temporaryFileURL()
-                if NSKeyedArchiver.archiveRootObject(object.data, toFile: path.path!) {
-                    let record = record != nil ? record! : CKRecord(recordType: recordType)
-                    record["data"] = CKAsset(fileURL: path)
-                    record["id"] = object.id
-                    if object.id == 0 {
-                        print("Object expected to respond to id - \(object)")
-                        return
-                    }
-                    print("Updating record to cloud - \(object.shortDescription)")
-                    s.publicDatabase.saveRecord(record, completionHandler: { (_, error) -> Void in
-                        if let error = error {
-                            print("Error saving record \(record) to cloud - \(error)")
-                        }
-                    })
-                }
-                else
-                {
-                    let error = AppDelegate.errorWithString("Unable to save cloudkit data file", code: .FileSystemError)
-                    completion(error: error, object: nil)
-                    return
-                }
-                completion(error: nil, object: object)
+                s.saveObject(object, recordType: recordType, completion: { error in
+                    completion(error: error, object: object)
+                })
             }
             else
             {

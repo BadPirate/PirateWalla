@@ -25,37 +25,42 @@
                                         <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="exj-cl-WLQ">
                                             <rect key="frame" x="8" y="9" width="584" height="49"/>
                                             <subviews>
-                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="1JT-bO-SdO" userLabel="Items Stack">
-                                                    <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
+                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="hm0-8U-6Bz" userLabel="Icons Stack">
+                                                    <rect key="frame" x="0.0" y="0.0" width="186" height="49"/>
                                                     <subviews>
-                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="psS-qa-TJr">
-                                                            <rect key="frame" x="0.0" y="0.0" width="50" height="49"/>
+                                                        <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="1JT-bO-SdO" userLabel="Items Stack">
+                                                            <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
+                                                            <subviews>
+                                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="psS-qa-TJr">
+                                                                    <rect key="frame" x="0.0" y="0.0" width="50" height="49"/>
+                                                                    <constraints>
+                                                                        <constraint firstAttribute="width" constant="50" id="RNR-df-2tk"/>
+                                                                    </constraints>
+                                                                </imageView>
+                                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WJY-hd-DsT">
+                                                                    <rect key="frame" x="58" y="0.0" width="50" height="49"/>
+                                                                    <constraints>
+                                                                        <constraint firstAttribute="width" constant="50" id="twY-be-K7F"/>
+                                                                    </constraints>
+                                                                </imageView>
+                                                            </subviews>
+                                                        </stackView>
+                                                        <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="tlu-VH-2Pn">
+                                                            <rect key="frame" x="111" y="22" width="0.0" height="6"/>
+                                                        </imageView>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="map_marker" translatesAutoresizingMaskIntoConstraints="NO" id="TgW-IR-54X">
+                                                            <rect key="frame" x="114" y="12" width="16" height="26"/>
                                                             <constraints>
-                                                                <constraint firstAttribute="width" constant="50" id="RNR-df-2tk"/>
+                                                                <constraint firstAttribute="width" constant="16" id="V9o-rQ-FQT"/>
                                                             </constraints>
                                                         </imageView>
-                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WJY-hd-DsT">
-                                                            <rect key="frame" x="58" y="0.0" width="50" height="49"/>
-                                                            <constraints>
-                                                                <constraint firstAttribute="width" constant="50" id="twY-be-K7F"/>
-                                                            </constraints>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cWo-6d-yHG" userLabel="Place Image">
+                                                            <rect key="frame" x="136" y="0.0" width="50" height="49"/>
                                                         </imageView>
                                                     </subviews>
                                                 </stackView>
-                                                <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="tlu-VH-2Pn">
-                                                    <rect key="frame" x="112" y="22" width="0.0" height="6"/>
-                                                </imageView>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="map_marker" translatesAutoresizingMaskIntoConstraints="NO" id="TgW-IR-54X">
-                                                    <rect key="frame" x="116" y="12" width="16" height="26"/>
-                                                    <constraints>
-                                                        <constraint firstAttribute="width" constant="16" id="V9o-rQ-FQT"/>
-                                                    </constraints>
-                                                </imageView>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cWo-6d-yHG" userLabel="Place Image">
-                                                    <rect key="frame" x="140" y="0.0" width="50" height="49"/>
-                                                </imageView>
                                                 <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="5t4-CB-qyo" userLabel="Description Stack">
-                                                    <rect key="frame" x="198" y="4" width="386" height="42"/>
+                                                    <rect key="frame" x="194" y="4" width="390" height="42"/>
                                                     <subviews>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Logic High Software" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VbR-6x-vGg" userLabel="Label">
                                                             <rect key="frame" x="0.0" y="0.0" width="155" height="21"/>
@@ -99,35 +104,40 @@
                                         <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="y3g-CZ-gVN">
                                             <rect key="frame" x="8" y="9" width="584" height="49"/>
                                             <subviews>
-                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="Qp0-8n-yx9" userLabel="Items Stack">
-                                                    <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
+                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="ab7-Rg-ohH" userLabel="Icons Stack">
+                                                    <rect key="frame" x="0.0" y="0.0" width="190" height="49"/>
                                                     <subviews>
-                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Km-fw-byy">
-                                                            <rect key="frame" x="0.0" y="0.0" width="50" height="49"/>
+                                                        <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="Qp0-8n-yx9" userLabel="Items Stack">
+                                                            <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
+                                                            <subviews>
+                                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Km-fw-byy">
+                                                                    <rect key="frame" x="0.0" y="0.0" width="50" height="49"/>
+                                                                    <constraints>
+                                                                        <constraint firstAttribute="width" constant="50" id="oHt-Ul-EBW"/>
+                                                                    </constraints>
+                                                                </imageView>
+                                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wgl-Lq-PVE">
+                                                                    <rect key="frame" x="58" y="0.0" width="50" height="49"/>
+                                                                    <constraints>
+                                                                        <constraint firstAttribute="width" constant="50" id="VZB-oM-gvi"/>
+                                                                    </constraints>
+                                                                </imageView>
+                                                            </subviews>
+                                                        </stackView>
+                                                        <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="eDC-Ic-BFu">
+                                                            <rect key="frame" x="112" y="22" width="0.0" height="6"/>
+                                                        </imageView>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="market" translatesAutoresizingMaskIntoConstraints="NO" id="xc5-39-xUU">
+                                                            <rect key="frame" x="116" y="15" width="16" height="20"/>
                                                             <constraints>
-                                                                <constraint firstAttribute="width" constant="50" id="oHt-Ul-EBW"/>
+                                                                <constraint firstAttribute="width" constant="16" id="Enj-cS-CDb"/>
                                                             </constraints>
                                                         </imageView>
-                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wgl-Lq-PVE">
-                                                            <rect key="frame" x="58" y="0.0" width="50" height="49"/>
-                                                            <constraints>
-                                                                <constraint firstAttribute="width" constant="50" id="VZB-oM-gvi"/>
-                                                            </constraints>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dEA-hz-1ip" userLabel="Place Image">
+                                                            <rect key="frame" x="140" y="0.0" width="50" height="49"/>
                                                         </imageView>
                                                     </subviews>
                                                 </stackView>
-                                                <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="eDC-Ic-BFu">
-                                                    <rect key="frame" x="112" y="22" width="0.0" height="6"/>
-                                                </imageView>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="market" translatesAutoresizingMaskIntoConstraints="NO" id="xc5-39-xUU">
-                                                    <rect key="frame" x="116" y="15" width="16" height="20"/>
-                                                    <constraints>
-                                                        <constraint firstAttribute="width" constant="16" id="Enj-cS-CDb"/>
-                                                    </constraints>
-                                                </imageView>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dEA-hz-1ip" userLabel="Place Image">
-                                                    <rect key="frame" x="140" y="0.0" width="50" height="49"/>
-                                                </imageView>
                                                 <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="Sth-5q-JTp" userLabel="Description Stack">
                                                     <rect key="frame" x="198" y="4" width="386" height="42"/>
                                                     <subviews>

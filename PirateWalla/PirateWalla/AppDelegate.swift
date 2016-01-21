@@ -9,7 +9,7 @@
 import UIKit
 
 enum ErrorCode : Int {
-    case LocationRequired = 1, WallabeeError, FileSystemError
+    case LocationRequired = 1, WallabeeError, FileSystemError, Cancelled
 }
 
 typealias EmptyCompletion = () -> Void

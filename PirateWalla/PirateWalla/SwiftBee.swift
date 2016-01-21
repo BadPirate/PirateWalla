@@ -8,14 +8,28 @@
 
 import Foundation
 import CoreLocation
+typealias emptyHandler = (cancelled : Bool) -> Void
 
 class SwiftBee {
     let gateTime : NSTimeInterval = 0.25
     let session : NSURLSession
-    var nextGate : NSDate? = nil
+    var activeGates = Set<NSDate>()
+    var pendingGates = [emptyHandler]()
+    let gateLock : dispatch_queue_t
     
     init() {
         session = NSURLSession(configuration: NSURLSessionConfiguration.defaultSessionConfiguration())
+        gateLock = dispatch_queue_create("BeeGateLock", nil)
+    }
+    
+    func cancelAll() {
+        dispatch_sync(gateLock) { [weak self] () -> Void in
+            guard let s = self else { return }
+            while let pending = s.pendingGates.first {
+                let _ = s.pendingGates.removeFirst()
+                pending(cancelled: true)
+            }
+        }
     }
     
     func place(id : Int, completion : (error : NSError?, place : SBPlace?) -> Void) {
@@ -138,9 +152,14 @@ class SwiftBee {
     }
     
     func get(path : String, completion : (error: NSError?, data : [ String : AnyObject ]?) -> Void) {
-        gate { [weak self] () -> Void in
+        gate { [weak self] (cancelled) -> Void in
             guard let s = self
                 else { return }
+            if (cancelled) {
+                let error = AppDelegate.errorWithString("Cancelled", code: .Cancelled)
+                completion(error: error, data: nil)
+                return
+            }
             print("GET - \(path)")
             let request = NSMutableURLRequest(URL: NSURL(string: "https://api.wallab.ee/\(path)")!)
             request.addValue("4f92cb2f-c9f4-4af6-b648-493b4d4902ab", forHTTPHeaderField: "X-WallaBee-API-Key")
@@ -177,21 +196,31 @@ class SwiftBee {
         }
     }
     
-    func gate(completion : () -> Void) {
-        synced(self) { [weak self] () -> () in
-            guard let s = self
-                else { return }
-            if s.nextGate == nil || s.nextGate!.timeIntervalSinceNow <= 0 {
-                s.nextGate = NSDate(timeIntervalSinceNow: s.gateTime)
-                completion()
+    func startGate(completion : emptyHandler) {
+        // Expected to be protected in gate lock when called.
+        let date = NSDate()
+        activeGates.insert(date)
+        delay(1, closure: { [weak self] () -> () in
+            guard let s = self else { return }
+            dispatch_sync(s.gateLock, { () -> Void in
+                s.activeGates.remove(date)
+                if let next = s.pendingGates.first {
+                    let _ = s.pendingGates.removeFirst()
+                    s.startGate(next)
+                }
+            })
+            completion(cancelled: false)
+            })
+    }
+    
+    func gate(completion : emptyHandler) {
+        dispatch_sync(gateLock) { [weak self] () -> Void in
+            guard let s = self else { return }
+            if s.activeGates.count < 5 {
+                s.startGate(completion)
                 return
             }
-            let nextGate = s.nextGate!
-            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(nextGate.timeIntervalSinceNow * Double(NSEC_PER_SEC)))
-            dispatch_after(delayTime, dispatch_get_main_queue()) {
-                completion()
-            }
-            s.nextGate = nextGate.dateByAddingTimeInterval(s.gateTime)
+            s.pendingGates.append(completion)
         }
     }
     

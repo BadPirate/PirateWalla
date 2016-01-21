@@ -26,7 +26,7 @@
                                             <rect key="frame" x="8" y="9" width="584" height="49"/>
                                             <subviews>
                                                 <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="hm0-8U-6Bz" userLabel="Icons Stack">
-                                                    <rect key="frame" x="0.0" y="0.0" width="186" height="49"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="220" height="49"/>
                                                     <subviews>
                                                         <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="1JT-bO-SdO" userLabel="Items Stack">
                                                             <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
@@ -45,22 +45,28 @@
                                                                 </imageView>
                                                             </subviews>
                                                         </stackView>
-                                                        <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="tlu-VH-2Pn">
-                                                            <rect key="frame" x="111" y="22" width="0.0" height="6"/>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="tlu-VH-2Pn">
+                                                            <rect key="frame" x="114" y="22" width="28" height="6"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="28" id="k25-mV-NI6"/>
+                                                            </constraints>
                                                         </imageView>
                                                         <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="map_marker" translatesAutoresizingMaskIntoConstraints="NO" id="TgW-IR-54X">
-                                                            <rect key="frame" x="114" y="12" width="16" height="26"/>
+                                                            <rect key="frame" x="148" y="12" width="16" height="26"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="width" constant="16" id="V9o-rQ-FQT"/>
                                                             </constraints>
                                                         </imageView>
                                                         <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cWo-6d-yHG" userLabel="Place Image">
-                                                            <rect key="frame" x="136" y="0.0" width="50" height="49"/>
+                                                            <rect key="frame" x="170" y="0.0" width="50" height="49"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="50" id="ABP-4V-42o"/>
+                                                            </constraints>
                                                         </imageView>
                                                     </subviews>
                                                 </stackView>
-                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="5t4-CB-qyo" userLabel="Description Stack">
-                                                    <rect key="frame" x="194" y="4" width="390" height="42"/>
+                                                <stackView opaque="NO" contentMode="scaleToFill" horizontalCompressionResistancePriority="250" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="5t4-CB-qyo" userLabel="Description Stack">
+                                                    <rect key="frame" x="228" y="4" width="356" height="42"/>
                                                     <subviews>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Logic High Software" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VbR-6x-vGg" userLabel="Label">
                                                             <rect key="frame" x="0.0" y="0.0" width="155" height="21"/>
@@ -90,6 +96,7 @@
                                     <outlet property="detailLabel" destination="5zP-Zg-lPo" id="o6m-6c-TRj"/>
                                     <outlet property="itemsStack" destination="1JT-bO-SdO" id="iak-wv-kpc"/>
                                     <outlet property="label" destination="VbR-6x-vGg" id="1wP-cA-VKK"/>
+                                    <outlet property="moreImageConstraint" destination="k25-mV-NI6" id="GPh-Yh-5Ju"/>
                                     <outlet property="moreImageView" destination="tlu-VH-2Pn" id="h6s-PL-lng"/>
                                     <outlet property="placeImageView" destination="cWo-6d-yHG" id="8s8-D0-och"/>
                                 </connections>
@@ -105,7 +112,7 @@
                                             <rect key="frame" x="8" y="9" width="584" height="49"/>
                                             <subviews>
                                                 <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" alignment="center" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="ab7-Rg-ohH" userLabel="Icons Stack">
-                                                    <rect key="frame" x="0.0" y="0.0" width="190" height="49"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="226" height="49"/>
                                                     <subviews>
                                                         <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" distribution="fillEqually" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="Qp0-8n-yx9" userLabel="Items Stack">
                                                             <rect key="frame" x="0.0" y="0.0" width="108" height="49"/>
@@ -124,22 +131,28 @@
                                                                 </imageView>
                                                             </subviews>
                                                         </stackView>
-                                                        <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="eDC-Ic-BFu">
-                                                            <rect key="frame" x="112" y="22" width="0.0" height="6"/>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="more" translatesAutoresizingMaskIntoConstraints="NO" id="eDC-Ic-BFu">
+                                                            <rect key="frame" x="116" y="22" width="28" height="6"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="28" id="eq6-Po-Bv9"/>
+                                                            </constraints>
                                                         </imageView>
                                                         <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="market" translatesAutoresizingMaskIntoConstraints="NO" id="xc5-39-xUU">
-                                                            <rect key="frame" x="116" y="15" width="16" height="20"/>
+                                                            <rect key="frame" x="152" y="15" width="16" height="20"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="width" constant="16" id="Enj-cS-CDb"/>
                                                             </constraints>
                                                         </imageView>
                                                         <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dEA-hz-1ip" userLabel="Place Image">
-                                                            <rect key="frame" x="140" y="0.0" width="50" height="49"/>
+                                                            <rect key="frame" x="176" y="0.0" width="50" height="49"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" constant="50" id="uQI-LY-7gd"/>
+                                                            </constraints>
                                                         </imageView>
                                                     </subviews>
                                                 </stackView>
-                                                <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="Sth-5q-JTp" userLabel="Description Stack">
-                                                    <rect key="frame" x="198" y="4" width="386" height="42"/>
+                                                <stackView opaque="NO" contentMode="scaleToFill" horizontalCompressionResistancePriority="250" axis="vertical" alignment="top" translatesAutoresizingMaskIntoConstraints="NO" id="Sth-5q-JTp" userLabel="Description Stack">
+                                                    <rect key="frame" x="234" y="4" width="350" height="42"/>
                                                     <subviews>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Logic High Software" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KeD-kj-Fta" userLabel="Label">
                                                             <rect key="frame" x="0.0" y="0.0" width="155" height="21"/>
@@ -169,6 +182,7 @@
                                     <outlet property="detailLabel" destination="96L-iA-L8S" id="22s-r3-6Vw"/>
                                     <outlet property="itemsStack" destination="Qp0-8n-yx9" id="tbp-x8-lsd"/>
                                     <outlet property="label" destination="KeD-kj-Fta" id="F6Z-ta-aqJ"/>
+                                    <outlet property="moreImageConstraint" destination="eq6-Po-Bv9" id="D8x-AZ-qVm"/>
                                     <outlet property="moreImageView" destination="eDC-Ic-BFu" id="kJA-PY-80n"/>
                                     <outlet property="placeImageView" destination="dEA-hz-1ip" id="aDy-xI-BbL"/>
                                 </connections>

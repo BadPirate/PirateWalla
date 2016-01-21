@@ -25,6 +25,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     var willUpdateSections : Bool = false
     var willUpdateProgress : Bool = false
+    let activityLock : dispatch_queue_t
     var finishedActivities : Int = 0
     var totalActivities : Int = 0
     
@@ -42,6 +43,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         let bee = SwiftBee()
         self.bee = bee
         self.cloudCache = CloudCache(bee: bee)
+        activityLock = dispatch_queue_create("ActivityLock", nil)
         super.init(coder: aDecoder)
     }
     
@@ -132,6 +134,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     func reset() {
+        bee.cancelAll()
         clearRows()
         nearby = nil
         savedItems = nil
@@ -702,39 +705,18 @@ class ItemCell : UITableViewCell {
     @IBOutlet var label : UILabel?
     @IBOutlet var detailLabel : UILabel?
     @IBOutlet var moreImageView : UIImageView?
+    @IBOutlet var moreImageConstraint : NSLayoutConstraint?
     
     func cleanup() {
-        itemsStack!.subviews.forEach { (view) -> () in
-            view.removeFromSuperview()
-        }
         placeImageView!.image = nil
         label!.text = nil
         detailLabel!.text = nil
+        updateItemStack()
     }
     
     override var frame : CGRect {
         didSet {
-            collapseStack()
-        }
-    }
-    
-    func collapseStack() {
-        guard let itemsStack = self.itemsStack else { return }
-        var shouldShowMore = false
-        if itemsStack.subviews.count > 0 {
-            let showItems = min(Int(floor(frame.size.width / 90)),itemsStack.subviews.count)
-            for item in itemsStack.subviews[0..<showItems] {
-                item.hidden = false
-            }
-            if itemsStack.subviews.count > showItems {
-                shouldShowMore = true
-                for item in itemsStack.subviews[showItems..<itemsStack.subviews.count] {
-                    item.hidden = true
-                }
-            }
-        }
-        if !shouldShowMore != moreImageView!.hidden {
-            moreImageView!.hidden = !shouldShowMore
+            updateItemStack()
         }
     }
     
@@ -750,7 +732,36 @@ class ItemCell : UITableViewCell {
         }
     }
     
-    var row : ItemRow?
+    var imageViews = [UIImageView]()
+    
+    var row : ItemRow? {
+        didSet {
+            imageViews.removeAll()
+            if let row = row {
+                for item in row.items {
+                    let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
+                    imageView.addConstraint(NSLayoutConstraint(item: imageView, attribute: .Width, relatedBy: .GreaterThanOrEqual, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: minimumItemWidth))
+                    imageView.image = blankImage
+                    if let url = item.imageURL(imageSize) {
+                        item.bee.session.dataTaskWithURL(url, completionHandler: { [weak self, weak imageView] (data, _, error) -> Void in
+                            guard let s = self, imageView = imageView else { return }
+                            if s.row !== row { return }
+                            if let error = error {
+                                print("Error loading image - \(error)")
+                                return
+                            }
+                            if let data = data {
+                                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                                    imageView.image = UIImage(data: data, scale: s.scale)
+                                })
+                            }
+                            }).resume()
+                    }
+                    imageViews.append(imageView)
+                }
+            }
+        }
+    }
     
     var blankImage : UIImage {
         get {
@@ -761,29 +772,29 @@ class ItemCell : UITableViewCell {
         }
     }
     
+    let minimumItemWidth = CGFloat(30)
+    let maximumPercent : CGFloat = 0.4
+    var moreWidth : CGFloat = 0
+    
     func updateItemStack() {
         guard let row = row else { return }
-        for item in row.items {
-            let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
-            imageView.image = blankImage
-            if let url = item.imageURL(imageSize) {
-                item.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
-                    guard let s = self else { return }
-                    if s.row !== row { return }
-                    if let error = error {
-                        print("Error loading image - \(error)")
-                        return
-                    }
-                    if let data = data {
-                        dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                            imageView.image = UIImage(data: data, scale: s.scale)
-                        })
-                    }
-                    }).resume()
-            }
-            itemsStack!.addArrangedSubview(imageView)
+        let itemsStack = self.itemsStack!
+        itemsStack.subviews.forEach { (view) -> () in
+            view.removeFromSuperview()
         }
-        itemsStack!.sizeToFit()
+        let showItems = min(Int(floor((frame.size.width * maximumPercent) / (minimumItemWidth + itemsStack.spacing))),row.items.count)
+        for on in 0..<showItems {
+            let imageView = imageViews[on]
+            itemsStack.addArrangedSubview(imageView)
+        }
+        let showMore = showItems != row.items.count
+        moreWidth = max(moreImageConstraint!.constant,moreWidth)
+        moreImageConstraint!.constant = showMore ? moreWidth : 0.0
+        let minWidth = CGFloat(showItems) * minimumItemWidth + CGFloat(max(0,showItems-1)) * itemsStack.spacing
+        let maxWidth = CGFloat(showItems) * 50.0 + CGFloat(max(0,showItems-1)) * itemsStack.spacing
+        let width = min(max(minWidth,frame.width*maximumPercent),maxWidth)
+        itemsStack.removeConstraints(itemsStack.constraints)
+        itemsStack.addConstraint(NSLayoutConstraint(item: itemsStack, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: width))
     }
     
     func setPlaceImage(url : NSURL) {

@@ -16,7 +16,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     let bee : SwiftBee
     let cloudCache : CloudCache
     let locationManager = CLLocationManager()
-    let progressView  = UIProgressView(progressViewStyle: .Bar)
+    let progressView  = UILabel(frame: CGRectMake(0,0,200,40))
     
     // Sections
     let sections : [ActionSection]
@@ -26,8 +26,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     var willUpdateSections : Bool = false
     var willUpdateProgress : Bool = false
     let activityLock : dispatch_queue_t
-    var finishedActivities : Int = 0
-    var totalActivities : Int = 0
+    var activities = [String]()
     
     // State Variables
     var user : SBUser?
@@ -53,6 +52,8 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         if let navigationController = navigationController {
             navigationController.toolbarHidden = false
         }
+        progressView.textAlignment = .Center
+        progressView.adjustsFontSizeToFitWidth = true
         toolbarItems = [UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil),UIBarButtonItem(customView: progressView),UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil)]
         login()
         getNearby()
@@ -106,16 +107,22 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         self.presentViewController(alert, animated: true, completion: nil)
     }
     
-    func startedActivity() {
-        totalActivities++
+    func startedActivity(activity : String) {
+        dispatch_sync(activityLock) { () -> Void in
+            self.activities.append(activity)
+        }
         updateProgress()
     }
     
-    func stoppedActivity() {
-        finishedActivities++
-        if finishedActivities == totalActivities {
-            finishedActivities = 0
-            totalActivities = 0
+    func stoppedActivity(activity : String) {
+        dispatch_sync(activityLock) { () -> Void in
+            for on in (0..<self.activities.count).reverse() {
+                let someActivity = self.activities[on]
+                if someActivity == activity {
+                    self.activities.removeAtIndex(on)
+                    break
+                }
+            }
         }
         updateProgress()
     }
@@ -130,7 +137,17 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             return
         }
         willUpdateProgress = false
-        progressView.progress = totalActivities == 0 ? Float(0) : Float(finishedActivities) / Float(totalActivities)
+        if let progressString = activities.last {
+            if progressView.text != progressString {
+                progressView.text = progressString
+            }
+        }
+        else
+        {
+            if progressView.text != nil {
+                progressView.text = nil
+            }
+        }
     }
     
     func reset() {
@@ -158,10 +175,11 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     func login() {
         if let id = NSUserDefaults.standardUserDefaults().stringForKey("id")
         {
-            startedActivity()
+            let loginActivity = "Logging in"
+            startedActivity(loginActivity)
             bee.user(id) { [weak self] (error, user) -> Void in
                 guard let s = self else { return }
-                s.stoppedActivity()
+                s.stoppedActivity(loginActivity)
                 if let error = error {
                     AppDelegate.handleError(error, completion: { () -> Void in
                         s.logout()
@@ -196,6 +214,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             guard let s = self else { return }
             if let userLocation = s.locationManager.location {
                 if userLocation.timestamp.timeIntervalSinceNow < -5 {
+                    s.startedActivity("Updating Location")
                     s.locationManager.startUpdatingLocation()
                 }
                 else
@@ -204,6 +223,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 }
             }
             else {
+                s.startedActivity("Updating Location")
                 s.locationManager.startUpdatingLocation()
             }
         }
@@ -316,9 +336,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             }
         }
         if missingMarket.count > 0 {
-            startedActivity()
+            let marketActivity = "Retrieiving market sets"
+            startedActivity(marketActivity)
             groupItemsBySet(missingMarket, completion: { [weak self] (error, groups) -> Void in
-                self?.stoppedActivity()
+                self?.stoppedActivity(marketActivity)
                 guard let s = self, groups = groups else { return }
                 if let _ = error { return }
                 for (set, items) in groups {
@@ -330,9 +351,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 })
         }
         if improvedMarket.count > 0 {
-            startedActivity()
+            let marketActivity = "Sorting improved market items"
+            startedActivity(marketActivity)
             groupItemsBySet(improvedMarket, completion: { [weak self] (error, groups) -> Void in
-                self?.stoppedActivity()
+                self?.stoppedActivity(marketActivity)
                 if let _ = error { return }
                 guard let s = self, groups = groups else { return }
                 for (set, items) in groups {
@@ -347,10 +369,8 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func groupItemsBySet(items: Set<SBMarketItem>, completion : (error : NSError?, groups : [ SBSet : Set<SBItem> ]?) -> Void)
     {
-        startedActivity()
         cloudCache.enhance(items) { [weak self] (error, items) -> Void in
             guard let s = self else { return }
-            s.stoppedActivity()
             if let error = error {
                 completion(error: error, groups: nil)
                 return
@@ -379,9 +399,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 }
             }
             
-            s.cloudCache.sets(Set(groupedBySetIdentifier.keys), completion: { [weak s] (error, sets) -> Void in
-                guard let s = s else { return }
-                s.stoppedActivity()
+            s.cloudCache.sets(Set(groupedBySetIdentifier.keys), completion: { (error, sets) -> Void in
                 if let error = error {
                     completion(error: error, groups: nil)
                     return
@@ -415,26 +433,30 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         clearRows()
         
         // Check the Helicarrier
-        startedActivity()
+        let helicarrierActivity = "Checking Helicarrier"
+        startedActivity(helicarrierActivity)
         bee.place(helicarrierID) { [weak self] (error, place) -> Void in
-            self?.stoppedActivity()
             guard let s = self else { return }
             if let place = place {
-                s.startedActivity()
                 place.items({ [weak s] (error, items) -> Void in
-                    s?.stoppedActivity()
+                    s?.stoppedActivity(helicarrierActivity)
                     guard let s = s, items = items else { return }
                     s.parseItems(items, place: place)
                     })
+            }
+            else
+            {
+                self?.stoppedActivity(helicarrierActivity)
             }
         }
         
         // Check Nearby
         print("Refreshing list User - \(user.id) - Nearby \(nearby.count) - Saved Items \(savedItems.count)")
         for place in nearby {
-            startedActivity()
+            let checkNearbyActivity = "Searching \(place.name)"
+            startedActivity(checkNearbyActivity)
             place.items({ [weak self] (error, items) -> Void in
-                self?.stoppedActivity()
+                self?.stoppedActivity(checkNearbyActivity)
                 guard let s = self, let snb = s.nearby, items = items else { return }
                 if snb != nearby { return }
                 if let error = error {
@@ -447,9 +469,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         
         if NSUserDefaults.standardUserDefaults().boolForKey("disableMarketSearch") == false {
             // Check the Market
-            startedActivity()
+            let marketActivity = "Searching Market"
+            startedActivity(marketActivity)
             bee.market { [weak self] (error, items) -> Void in
-                self?.stoppedActivity()
+                self?.stoppedActivity(marketActivity)
                 guard let s = self else { return }
                 if error != nil { return }
                 if let items = items {
@@ -504,7 +527,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func getSavedItems() {
         guard let user = user else { login(); return }
+        let savedActivity = "Getting saved items"
+        self.startedActivity(savedActivity)
         user.savedItems { [weak self] (error, savedItems) -> Void in
+            self?.stoppedActivity(savedActivity)
             guard let s = self else { return }
             if let error = error {
                 AppDelegate.handleError(error, completion: { () -> Void in
@@ -524,7 +550,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func addUniqueItems() {
         guard let user = user else { login(); return }
+        let uniqueItemsActivity = "Getting unique items"
+        startedActivity(uniqueItemsActivity)
         user.uniqueItems { [weak self] (error, uniqueItems) -> Void in
+            self?.stoppedActivity(uniqueItemsActivity)
             guard let s = self else { return }
             if let error = error {
                 AppDelegate.handleError(error, completion: { () -> Void in
@@ -546,7 +575,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     func locationManager(manager: CLLocationManager, didUpdateToLocation newLocation: CLLocation, fromLocation oldLocation: CLLocation) {
+        stoppedActivity("Updating Location")
         locationManager.stopUpdatingLocation()
+        
         if (refreshLocation) {
             refreshLocation = false;
             if oldLocation.distanceFromLocation(newLocation) > 500
@@ -559,10 +590,11 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     func nearbyForLocation(location : CLLocation) {
-        startedActivity()
+        let nearbyActivity = "Searching nearby"
+        startedActivity(nearbyActivity)
         bee.nearby(location) { [weak self] (error, places) -> Void in
             guard let s = self else { return }
-            s.stoppedActivity()
+            s.stoppedActivity(nearbyActivity)
             if let error = error {
                 AppDelegate.handleError(error, completion: { [weak s] () -> Void in
                     guard let s = s else { return }
@@ -772,7 +804,7 @@ class ItemCell : UITableViewCell {
         }
     }
     
-    let minimumItemWidth = CGFloat(30)
+    let minimumItemWidth = CGFloat(25)
     let maximumPercent : CGFloat = 0.4
     var moreWidth : CGFloat = 0
     

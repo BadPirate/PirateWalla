@@ -790,9 +790,9 @@ class ItemCell : UITableViewCell {
         let showMore = showItems != row.items.count
         moreWidth = max(moreImageConstraint!.constant,moreWidth)
         moreImageConstraint!.constant = showMore ? moreWidth : 0.0
-        let minWidth = CGFloat(showItems) * minimumItemWidth + CGFloat(max(0,showItems-1)) * itemsStack.spacing
-        let maxWidth = CGFloat(showItems) * 50.0 + CGFloat(max(0,showItems-1)) * itemsStack.spacing
-        let width = min(max(minWidth,frame.width*maximumPercent),maxWidth)
+        let minStackWidth = CGFloat(showItems) * minimumItemWidth + CGFloat(max(0,showItems-1)) * itemsStack.spacing
+        let maxStackWidth = CGFloat(showItems) * 50.0 + CGFloat(max(0,showItems-1)) * itemsStack.spacing
+        let width = min(max(minStackWidth,frame.width*maximumPercent),maxStackWidth)
         itemsStack.removeConstraints(itemsStack.constraints)
         itemsStack.addConstraint(NSLayoutConstraint(item: itemsStack, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: width))
     }

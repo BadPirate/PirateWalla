@@ -31,6 +31,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     // State Variables
     var user : SBUser?
     var nearby : [ SBPlace ]?
+    let savedItemsLock : dispatch_queue_t
     var savedItems : [ Int : SBSavedItem ]?
     var refreshing = false
     var refreshLocation = false
@@ -43,6 +44,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         self.bee = bee
         self.cloudCache = CloudCache(bee: bee)
         activityLock = dispatch_queue_create("ActivityLock", nil)
+        savedItemsLock = dispatch_queue_create("SavedItemsLock", nil)
         super.init(coder: aDecoder)
     }
     
@@ -116,7 +118,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func stoppedActivity(activity : String) {
         dispatch_sync(activityLock) { () -> Void in
-            for on in (0..<self.activities.count).reverse() {
+            for on in 0..<self.activities.count {
                 let someActivity = self.activities[on]
                 if someActivity == activity {
                     self.activities.removeAtIndex(on)
@@ -137,7 +139,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             return
         }
         willUpdateProgress = false
-        if let progressString = activities.last {
+        if let progressString = activities.first {
             if progressView.text != progressString {
                 progressView.text = progressString
             }
@@ -154,7 +156,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         bee.cancelAll()
         clearRows()
         nearby = nil
-        savedItems = nil
+        dispatch_sync(savedItemsLock) { () -> Void in
+            self.savedItems = nil
+        }
         refreshing = false
     }
     
@@ -410,7 +414,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     groups[set] = groupedBySetIdentifier[set.id]
                 }
                 completion(error: nil, groups: groups)
-                })
+            })
         }
     }
     
@@ -509,6 +513,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 while section.pendingRows.count > 0 {
                     let index = NSIndexPath(forRow: section.rows.count, inSection: sectionOn)
                     self.tableView.insertRowsAtIndexPaths([index], withRowAnimation: .Automatic)
+                    if section.rows.count == 0 {
+                        // First row, show header
+                        self.tableView.reloadSections(NSIndexSet(index: sectionOn), withRowAnimation: .Automatic)
+                    }
                     section.rows.append(section.pendingRows.first!)
                     section.pendingRows.removeFirst()
                 }
@@ -538,12 +546,14 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 })
                 return
             }
-            s.savedItems = [ Int : SBSavedItem ]()
-            if let savedItems = savedItems {
-                for savedItem in savedItems {
-                    s.savedItems![savedItem.itemTypeID] = savedItem
+            dispatch_sync(s.savedItemsLock, { () -> Void in
+                s.savedItems = [ Int : SBSavedItem ]()
+                if let savedItems = savedItems {
+                    for savedItem in savedItems {
+                        s.savedItems![savedItem.itemTypeID] = savedItem
+                    }
                 }
-            }
+            })
             s.addUniqueItems()
         }
     }
@@ -561,11 +571,15 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 })
                 return
             }
-            if let uniqueItems = uniqueItems {
-                for uniqueItem in uniqueItems {
-                    s.savedItems![uniqueItem.itemTypeID] = uniqueItem
+            dispatch_sync(s.savedItemsLock, { () -> Void in
+                if s.savedItems == nil { return }
+                if let uniqueItems = uniqueItems {
+                    for uniqueItem in uniqueItems {
+                        s.savedItems![uniqueItem.itemTypeID] = uniqueItem
+                    }
                 }
-            }
+            })
+
             s.refreshList()
         }
     }
@@ -612,7 +626,14 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return sections[section].title
+        let section = sections[section]
+        if section.rows.count > 0 {
+            return section.title
+        }
+        else
+        {
+            return nil
+        }
     }
     
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

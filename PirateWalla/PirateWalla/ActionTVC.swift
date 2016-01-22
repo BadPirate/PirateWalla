@@ -340,7 +340,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             }
         }
         if missingMarket.count > 0 {
-            let marketActivity = "Retrieiving market sets"
+            let marketActivity = "Retrieving market sets"
             startedActivity(marketActivity)
             groupItemsBySet(missingMarket, completion: { [weak self] (error, groups) -> Void in
                 self?.stoppedActivity(marketActivity)

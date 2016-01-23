@@ -367,6 +367,7 @@ class CloudCache {
                 if let error = error {
                     print("Error saving record \(record) to cloud - \(error)")
                 }
+                completion(error: error)
             })
         }
         else

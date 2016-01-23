@@ -28,8 +28,12 @@ func delay(delay:Double, closure:()->()) {
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var window: UIWindow?
-        
+    
     class func handleError(error : NSError, completion : EmptyCompletion) {
+        handleError(error, button: "Retry", title: "Error", completion: completion)
+    }
+    
+    class func handleError(error : NSError, button : String, title : String, completion : EmptyCompletion) {
         if !NSThread.isMainThread() {
             dispatch_async(dispatch_get_main_queue(), { () -> Void in
                 self.handleError(error, completion: completion)
@@ -42,8 +46,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         default:
             break
         }
-        let alert = UIAlertController(title: "Error :(", message: message, preferredStyle: .Alert)
-        alert.addAction(UIAlertAction(title: "Retry", style: .Default, handler: { (_action) -> Void in
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .Alert)
+        alert.addAction(UIAlertAction(title: button, style: .Default, handler: { (_action) -> Void in
             completion()
         }))
         

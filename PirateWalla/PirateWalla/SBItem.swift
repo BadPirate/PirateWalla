@@ -13,7 +13,7 @@ class SBItem : SBSavedItem {
         super.init(dictionary: dictionary, type: dictionary["item_type_id"]! as! String, bee: bee)
     }
     
-    var name : String {
+    override var name : String {
         get {
             return data["name"] as? String ?? "Error"
         }
@@ -76,7 +76,7 @@ class SBSavedItem : SBItemBase {
         super.init(dictionary: appended, bee: bee)
     }
     
-    var locked : Bool {
+    override var locked : Bool {
         get {
             if let status = data["status"] as? String {
                 return status == "LOCKED"
@@ -97,6 +97,18 @@ class SBItemBase : SBObject {
     var itemTypeID : Int {
         get {
             return Int(data["item_type_id"] as! String)!
+        }
+    }
+    
+    var name : String {
+        get {
+            return shortDescription
+        }
+    }
+    
+    var locked : Bool {
+        get {
+            return false
         }
     }
     

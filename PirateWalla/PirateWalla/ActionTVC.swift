@@ -22,6 +22,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     let sections : [ActionSection]
     let missingSection : ActionSection
     let improveSection : ActionSection
+    let sdSection : ActionSection
+    let ddSection : ActionSection
+    let tdSection : ActionSection
+    let onexxSection : ActionSection
     
     var willUpdateSections : Bool = false
     var willUpdateProgress : Bool = false
@@ -37,9 +41,14 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     var refreshLocation = false
     
     required init?(coder aDecoder: NSCoder) {
-        missingSection = ActionSection(title: "Missing Items")
-        improveSection = ActionSection(title: "Improved Items")
-        sections = [missingSection, improveSection]
+        sdSection = ActionSection(title: "SINGLE DIGIT!!", rowDescriptor: "SD")
+        ddSection = ActionSection(title: "Double Digit Items", rowDescriptor: "DD")
+        tdSection = ActionSection(title: "Triple Digit Items", rowDescriptor: "TD")
+        onexxSection = ActionSection(title: "1xxx", rowDescriptor: "1xxx")
+        missingSection = ActionSection(title: "Missing Items", rowDescriptor: "Missing")
+        improveSection = ActionSection(title: "Improved Items", rowDescriptor: "Improved")
+        
+        sections = [missingSection,sdSection,ddSection,tdSection,onexxSection,improveSection]
         let bee = SwiftBee()
         self.bee = bee
         self.cloudCache = CloudCache(bee: bee)
@@ -95,6 +104,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         let alert = UIAlertController(title: "Settings", message: nil, preferredStyle: .ActionSheet)
         addToggleSetting(alert, setting: "disableNearbySearch", description: "nearby", onAction: "Don't search", offAction: "Search")
         addToggleSetting(alert, setting: "disableMarketSearch", description: "Market", onAction: "Don't search", offAction: "Search")
+        addToggleSetting(alert, setting: "enable1xxxSearch", description: "1xxx Search", onAction: "Enable", offAction: "Disable")
+        addToggleSetting(alert, setting: "disableSDSearch", description: "SD Search", onAction: "Disable", offAction: "Enable")
+        addToggleSetting(alert, setting: "disableDDSearch", description: "DD Search", onAction: "Disable", offAction: "Enable")
+        addToggleSetting(alert, setting: "disableTDSearch", description: "TD Search", onAction: "Disable", offAction: "Enable")
         addNumericalSetting(alert, key: "minImprovement", zero: "0", title: "Min Improvement", description: "Minimum amount items should be improved before showing in list, 0 for no minimum")
         addNumericalSetting(alert, key: "maxPrice", zero: "No Max", title: "Max Market", description: "Maximum market price per item, 0 for no maximum")
         alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
@@ -279,101 +292,116 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         }
     }
     
+    let marketPlaceID = -100
+    typealias placeObjects = [ ActionSection : [ SBPlace : Set<SBItemBase> ] ]
+    
+    func appendPlaceObject(inout placeObject : placeObjects, section : ActionSection, atPlace : SBPlace?, item : SBItemBase) {
+        let place = (atPlace != nil) ? atPlace! : SBPlace(dictionary: [ "id" : "\(marketPlaceID)" ], bee: item.bee)
+        
+        if placeObject[section] == nil {
+            placeObject[section] = [ SBPlace : Set<SBItemBase> ]()
+        }
+        if placeObject[section]![place] == nil {
+            placeObject[section]![place] = Set<SBItemBase>()
+        }
+        placeObject[section]![place]!.insert(item)
+    }
+    
     func parseItems(items: [SBItemBase], place : SBPlace?)
     {
         guard let savedItems = savedItems else { return }
-        var missingItems = [SBItem]()
-        var improvedItems = [SBItem]()
-        var missingMarket = Set<SBMarketItem>()
-        var improvedMarket = Set<SBMarketItem>()
+        var placeObjectsFound = placeObjects()
         
         let minImprovement = NSUserDefaults.standardUserDefaults().integerForKey("minImprovement")
         for item in items {
+            if item.locked { continue }
+            
+            // SD?
+            if item.number < 10 && !NSUserDefaults.standardUserDefaults().boolForKey("disableSDSearch") {
+                print("Single Digit! - \(item.name)")
+                appendPlaceObject(&placeObjectsFound, section: sdSection, atPlace: place, item: item)
+                continue
+            }
+            
             // Missing?
             if savedItems[item.itemTypeID] == nil {
-                if let item = item as? SBItem {
-                    if item.locked {
-                        print("Missing but locked - \(item.name)")
-                        continue
-                    }
-                    print("Missing - \(item.name)")
-                    missingItems.append(item)
-                }
-                else if let item = item as? SBMarketItem {
-                    print("Missing market - \(item.shortDescription)")
-                    missingMarket.insert(item)
-                }
+                print("Missing - \(item.name)")
+                appendPlaceObject(&placeObjectsFound, section: missingSection, atPlace: place, item: item)
+                continue
+            }
+            
+            // DD?
+            if item.number < 100 && !NSUserDefaults.standardUserDefaults().boolForKey("disableDDSearch") {
+                print("DD - \(item.name)")
+                appendPlaceObject(&placeObjectsFound, section: ddSection, atPlace: place, item: item)
+                continue
+            }
+            
+            // TD?
+            if item.number < 1000 && !NSUserDefaults.standardUserDefaults().boolForKey("disableTDSearch") {
+                print("TD - \(item.name)")
+                appendPlaceObject(&placeObjectsFound, section: tdSection, atPlace: place, item: item)
+                continue
+            }
+            
+            // 1xxx
+            if item.number < 2000 && NSUserDefaults.standardUserDefaults().boolForKey("enable1xxxSearch") {
+                print("1xxx - \(item.name)")
+                appendPlaceObject(&placeObjectsFound, section: onexxSection, atPlace: place, item: item)
+                continue
             }
             
             // Improved?
             if let savedItem = savedItems[item.itemTypeID] {
                 if item.number + minImprovement < savedItem.number {
-                    if let item = item as? SBItem {
-                        if item.locked {
-                            print("Improved but locked - \(item.name)")
-                            continue
+                    print("Improved - \(item.name)")
+                    appendPlaceObject(&placeObjectsFound, section: improveSection, atPlace: place, item: item)
+                    continue
+                }
+            }
+        }
+        
+        for (actionSection, placeObjects) in placeObjectsFound {
+            for (place, items) in placeObjects {
+                if place.id == marketPlaceID {
+                    // Market
+                    let marketActivity = "Sorting Market Items"
+                    var marketItems = Set<SBMarketItem>()
+                    for item in items {
+                        if let item = item as? SBMarketItem {
+                            marketItems.insert(item)
                         }
-                        print("Improved - \(item.name)")
-                        improvedItems.append(item)
                     }
-                    else if let item = item as? SBMarketItem {
-                        print("Improved market - \(item.shortDescription)")
-                        improvedMarket.insert(item)
+                    startedActivity(marketActivity)
+                    groupItemsBySet(marketItems, completion: { [weak self] (error, groups) -> Void in
+                        self?.stoppedActivity(marketActivity)
+                        guard let s = self, groups = groups else { return }
+                        if let error = error {
+                            AppDelegate.handleError(error, button: "Cloud Error", title: "Okay", completion: { () -> Void in })
+                            return
+                        }
+                        for (set, items) in groups {
+                            dispatch_sync(actionSection.pendingRowLock, { () -> Void in
+                                actionSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: actionSection.rowDescriptor))
+                            })
+                            s.shouldUpdateSections()
+                        }
+                    })
+                }
+                else {
+                    var plainItems = [SBItem]()
+                    for item in items {
+                        if let item = item as? SBItem {
+                            plainItems.append(item)
+                        }
                     }
-                }
-            }
-        }
-        if let place = place {
-            if missingItems.count > 0 {
-                let pickupRow = PickupRow(place: place, items: missingItems, kindLabel: "missing")
-                dispatch_sync(missingSection.pendingRowLock, { () -> Void in
-                    self.missingSection.pendingRows.append(pickupRow)
-                })
-                shouldUpdateSections()
-            }
-            if improvedItems.count > 0 {
-                let pickupRow = PickupRow(place: place, items: improvedItems, kindLabel: "improved")
-                dispatch_sync(improveSection.pendingRowLock, { () -> Void in
-                    self.improveSection.pendingRows.append(pickupRow)
-                })
-                shouldUpdateSections()
-            }
-        }
-        if missingMarket.count > 0 {
-            let marketActivity = "Sorting missing market items"
-            startedActivity(marketActivity)
-            groupItemsBySet(missingMarket, completion: { [weak self] (error, groups) -> Void in
-                self?.stoppedActivity(marketActivity)
-                guard let s = self, groups = groups else { return }
-                if let error = error {
-                    AppDelegate.handleError(error, button: "Market Error", title: "Okay", completion: { () -> Void in })
-                    return
-                }
-                for (set, items) in groups {
-                    dispatch_sync(s.missingSection.pendingRowLock, { () -> Void in
-                        s.missingSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "missing"))
+                    let pickupRow = PickupRow(place: place, items: plainItems, kindLabel: actionSection.rowDescriptor)
+                    dispatch_sync(actionSection.pendingRowLock, { () -> Void in
+                        actionSection.pendingRows.append(pickupRow)
                     })
-                    s.shouldUpdateSections()
+                    shouldUpdateSections()
                 }
-                })
-        }
-        if improvedMarket.count > 0 {
-            let marketActivity = "Sorting improved market items"
-            startedActivity(marketActivity)
-            groupItemsBySet(improvedMarket, completion: { [weak self] (error, groups) -> Void in
-                self?.stoppedActivity(marketActivity)
-                if let error = error {
-                    AppDelegate.handleError(error, button: "Market Error", title: "Okay", completion: { () -> Void in })
-                    return
-                }
-                guard let s = self, groups = groups else { return }
-                for (set, items) in groups {
-                    dispatch_sync(s.improveSection.pendingRowLock, { () -> Void in
-                        s.improveSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "improved"))
-                    })
-                    s.shouldUpdateSections()
-                }
-                })
+            }
         }
     }
     
@@ -631,6 +659,28 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         return sections.count
     }
     
+    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        let section = sections[section]
+        if section.rows.count > 0 {
+            return UITableViewAutomaticDimension
+        }
+        else
+        {
+            return 1
+        }
+    }
+    
+    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        let section = sections[section]
+        if section.rows.count > 0 {
+            return UITableViewAutomaticDimension
+        }
+        else
+        {
+            return 1
+        }
+    }
+    
     override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         let section = sections[section]
         if section.rows.count > 0 {
@@ -659,16 +709,27 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
 }
 
-class ActionSection {
+class ActionSection : Hashable {
     let title : String
+    let rowDescriptor : String
     let pendingRowLock : dispatch_queue_t
     
     var rows : [ ActionRow ] = [ActionRow]()
     var pendingRows : [ ActionRow ] = [ActionRow]()
-    init(title : String) {
+    init(title : String, rowDescriptor : String) {
         self.title = title
         self.pendingRowLock = dispatch_queue_create("actionTVC.\(title)", nil)
+        self.rowDescriptor = rowDescriptor
     }
+    var hashValue: Int {
+        get {
+            return title.hashValue
+        }
+    }
+}
+
+func ==(lhs: ActionSection, rhs: ActionSection) -> Bool {
+    return lhs.title == rhs.title
 }
 
 class ActionRow {

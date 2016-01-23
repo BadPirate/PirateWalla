@@ -185,10 +185,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 guard let s = self else { return }
                 s.stoppedActivity(loginActivity)
                 if let error = error {
-                    AppDelegate.handleError(error, completion: { () -> Void in
+                    AppDelegate.handleError(error, button: "Retry", title: "Error logging in", completion: { () -> Void in
                         s.logout()
                         s.login()
-                    })
+                        })
                     return
                 }
                 let user = user!
@@ -340,12 +340,15 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             }
         }
         if missingMarket.count > 0 {
-            let marketActivity = "Retrieving market sets"
+            let marketActivity = "Sorting missing market items"
             startedActivity(marketActivity)
             groupItemsBySet(missingMarket, completion: { [weak self] (error, groups) -> Void in
                 self?.stoppedActivity(marketActivity)
                 guard let s = self, groups = groups else { return }
-                if let _ = error { return }
+                if let error = error {
+                    AppDelegate.handleError(error, button: "Market Error", title: "Okay", completion: { () -> Void in })
+                    return
+                }
                 for (set, items) in groups {
                     dispatch_sync(s.missingSection.pendingRowLock, { () -> Void in
                         s.missingSection.pendingRows.append(MarketRow(set: set, items: Array(items), kindLabel: "missing"))
@@ -359,7 +362,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             startedActivity(marketActivity)
             groupItemsBySet(improvedMarket, completion: { [weak self] (error, groups) -> Void in
                 self?.stoppedActivity(marketActivity)
-                if let _ = error { return }
+                if let error = error {
+                    AppDelegate.handleError(error, button: "Market Error", title: "Okay", completion: { () -> Void in })
+                    return
+                }
                 guard let s = self, groups = groups else { return }
                 for (set, items) in groups {
                     dispatch_sync(s.improveSection.pendingRowLock, { () -> Void in
@@ -464,7 +470,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 guard let s = self, let snb = s.nearby, items = items else { return }
                 if snb != nearby { return }
                 if let error = error {
-                    AppDelegate.handleError(error, completion: { () -> Void in })
+                    AppDelegate.handleError(error, button: "Okay", title: "Error locating items", completion: { () -> Void in })
                     return
                 }
                 s.parseItems(items, place: place)

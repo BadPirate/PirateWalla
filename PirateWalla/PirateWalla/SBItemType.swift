@@ -31,4 +31,16 @@ class SBItemType : SBObject {
             return super.shortDescription + " - \(name)"
         }
     }
+    
+    var mix : Set<Int> {
+        get {
+            var mix = Set<Int>()
+            if let mixItems = data["mix"] as? [String] {
+                for mixItem in mixItems {
+                    mix.insert(Int(mixItem) ?? -1)
+                }
+            }
+            return mix
+        }
+    }
 }

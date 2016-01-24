@@ -198,6 +198,7 @@ class CloudCache {
             }
             
             dispatch_sync(retrievalLock, { () -> Void in
+                activities--
                 if activities == 0 {
                     completion(error: nil, objects: retrieved, updateCache: cache)
                 }

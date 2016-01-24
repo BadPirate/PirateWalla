@@ -32,6 +32,20 @@ class SwiftBee {
         }
     }
     
+    func setList(completion : (error : NSError?, sets : [SBSetBase]?) -> Void) {
+        get("/sets") { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            var sets = [SBSetBase]()
+            if let data = data, setDictionaries = data["sets"] as? [ [ String : AnyObject ] ] {
+                for setDictionary in setDictionaries {
+                    let set = SBSetBase(dictionary: setDictionary, bee: s)
+                    sets.append(set)
+                }
+            }
+            completion(error: error, sets: sets)
+        }
+    }
+    
     func place(id : Int, completion : (error : NSError?, place : SBPlace?) -> Void) {
         get("/places/\(id)") { [weak self] (error, data) -> Void in
             guard let s = self else { return }

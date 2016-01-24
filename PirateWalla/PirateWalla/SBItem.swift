@@ -113,10 +113,24 @@ class SBSavedItem : SBItemBase {
     }
 }
 
+enum NumberClass : Int {
+    case SD = 1, DD, TD, OneXXX, None
+}
+
 class SBItemBase : SBObject {
     var itemTypeID : Int {
         get {
             return Int(data["item_type_id"] as! String)!
+        }
+    }
+    
+    var numberClass : NumberClass {
+        get {
+            if number < 10 { return .SD }
+            if number < 100 { return .DD }
+            if number < 1000 { return .TD }
+            if number < 2000 { return .OneXXX }
+            return .None
         }
     }
     

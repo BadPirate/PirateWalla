@@ -11,28 +11,23 @@ import UIKit
 import CoreLocation
 
 let helicarrierID = 1728050
+let defaults = NSUserDefaults.standardUserDefaults()
 
-class ActionTVC : UITableViewController, CLLocationManagerDelegate {
+class ActionTVC : PWTVC, CLLocationManagerDelegate {
     let bee : SwiftBee
     let cloudCache : CloudCache
     let locationManager = CLLocationManager()
-    let progressView  = UILabel(frame: CGRectMake(0,0,200,40))
     
     // Sections
-    let sections : [ActionSection]
     let missingSection : ActionSection
     let mixPickupSection : ActionSection
+    let significantImprovement : ActionSection
     let improveSection : ActionSection
     let sdSection : ActionSection
     let ddSection : ActionSection
     let tdSection : ActionSection
     let onexxSection : ActionSection
     let pouchSection : ActionSection
-    
-    var willUpdateSections : Bool = false
-    var willUpdateProgress : Bool = false
-    let activityLock : dispatch_queue_t
-    var activities = [String]()
     
     // State Variables
     var user : SBUser?
@@ -53,16 +48,15 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         onexxSection = ActionSection(title: "1xxx", rowDescriptor: "1xxx")
         missingSection = ActionSection(title: "Missing Items", rowDescriptor: "Missing")
         improveSection = ActionSection(title: "Improved Items", rowDescriptor: "Improved")
+        significantImprovement = ActionSection(title: "Significant Improvement", rowDescriptor: "Improved")
         mixPickupSection = ActionSection(title: "Pickup for Mix", rowDescriptor: "Mix")
         pouchSection = ActionSection(title: "Pouch", rowDescriptor: "Pouch")
-        
-        sections = [missingSection,pouchSection,sdSection,ddSection,tdSection,onexxSection,mixPickupSection,improveSection]
         let bee = SwiftBee()
         self.bee = bee
         self.cloudCache = CloudCache(bee: bee)
-        activityLock = dispatch_queue_create("ActivityLock", nil)
         savedItemsLock = dispatch_queue_create("SavedItemsLock", nil)
         super.init(coder: aDecoder)
+        sections = [missingSection,pouchSection,significantImprovement,mixPickupSection,improveSection,sdSection,ddSection,tdSection,onexxSection]
     }
     
     override func viewDidLoad() {
@@ -78,104 +72,16 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         getNearby()
     }
     
-    func addToggleSetting(alert : UIAlertController, setting : String, description: String, onAction: String, offAction: String) {
-        let value = NSUserDefaults.standardUserDefaults().boolForKey(setting)
-        let stateString = value ? offAction : onAction
-        alert.addAction(UIAlertAction(title: "\(stateString) \(description)" , style: .Default, handler: { [weak self] (_) -> Void in
-            NSUserDefaults.standardUserDefaults().setBool(!value, forKey: setting)
-            NSUserDefaults.standardUserDefaults().synchronize()
-            self?.reload()
-        }))
-    }
-    
-    func addNumericalSetting(alert : UIAlertController, key : String, zero : String, title : String, description : String) {
-        let value = NSUserDefaults.standardUserDefaults().integerForKey(key) == 0 ? zero : "\(NSUserDefaults.standardUserDefaults().integerForKey(key))"
-        alert.addAction(UIAlertAction(title: "\(title) - \(value)", style: .Default, handler: { [weak self] (_) -> Void in
-            let alert = UIAlertController(title: title, message: description, preferredStyle: .Alert)
-            alert.addTextFieldWithConfigurationHandler({ (textField) -> Void in
-                textField.keyboardType = .NumberPad
-                textField.text = "\(NSUserDefaults.standardUserDefaults().integerForKey(key))"
-            })
-            alert.addAction(UIAlertAction(title: "Set", style: .Default, handler: { _ -> Void in
-                if let value = Int(alert.textFields![0].text ?? "0")
-                {
-                    NSUserDefaults.standardUserDefaults().setInteger(value, forKey: key)
-                    NSUserDefaults.standardUserDefaults().synchronize()
-                    self?.reload()
-                }
-            }))
-            self?.presentViewController(alert, animated: true, completion: nil)
-            }))
-    }
-    
-    @IBAction func settings(sender: UIBarButtonItem) {
-        let alert = UIAlertController(title: "Settings", message: nil, preferredStyle: .ActionSheet)
-        addToggleSetting(alert, setting: "disableNearbySearch", description: "nearby", onAction: "Don't search", offAction: "Search")
-        addToggleSetting(alert, setting: "disableMarketSearch", description: "Market", onAction: "Don't search", offAction: "Search")
-        addToggleSetting(alert, setting: "enable1xxxSearch", description: "1xxx Search", onAction: "Enable", offAction: "Disable")
-        addToggleSetting(alert, setting: "disableSDSearch", description: "SD Search", onAction: "Disable", offAction: "Enable")
-        addToggleSetting(alert, setting: "disableDDSearch", description: "DD Search", onAction: "Disable", offAction: "Enable")
-        addToggleSetting(alert, setting: "disableTDSearch", description: "TD Search", onAction: "Disable", offAction: "Enable")
-        addNumericalSetting(alert, key: "minImprovement", zero: "0", title: "Min Improvement", description: "Minimum amount items should be improved before showing in list, 0 for no minimum")
-        addNumericalSetting(alert, key: "maxPrice", zero: "No Max", title: "Max Market", description: "Maximum market price per item, 0 for no maximum")
-        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
-        if let presenter = alert.popoverPresentationController{
-            presenter.barButtonItem = sender
-        }
-        alert.addAction(UIAlertAction(title: "Logout", style: .Default, handler: { [weak self] _ -> Void in
-            guard let s = self else { return }
-            s.logout()
-            s.login()
-        }))
-        self.presentViewController(alert, animated: true, completion: nil)
-    }
-    
-    func startedActivity(activity : String) {
-        dispatch_sync(activityLock) { () -> Void in
-            self.activities.append(activity)
-        }
-        updateProgress()
-    }
-    
-    func stoppedActivity(activity : String) {
-        dispatch_sync(activityLock) { () -> Void in
-            for on in 0..<self.activities.count {
-                let someActivity = self.activities[on]
-                if someActivity == activity {
-                    self.activities.removeAtIndex(on)
-                    break
-                }
-            }
-        }
-        updateProgress()
-    }
-    
-    func updateProgress() {
-        if !NSThread.isMainThread() {
-            if willUpdateProgress { return }
-            willUpdateProgress = true;
-            dispatch_async(dispatch_get_main_queue(), { [weak self] () -> Void in
-                self?.updateProgress()
-                })
-            return
-        }
-        willUpdateProgress = false
-        if let progressString = activities.first {
-            if progressView.text != progressString {
-                progressView.text = progressString
-            }
-        }
-        else
-        {
-            if progressView.text != nil {
-                progressView.text = nil
-            }
-        }
-    }
-    
     func reset() {
         bee.cancelAll()
         clearRows()
+        if let user = user {
+            let userID = defaults.stringForKey(settingUserID)
+            if userID != user.name && userID != "\(user.id)" {
+                self.user = nil
+                login()
+            }
+        }
         nearby = nil
         dispatch_sync(savedItemsLock) { () -> Void in
             self.savedItems = nil
@@ -194,15 +100,15 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     func logout() {
-        NSUserDefaults.standardUserDefaults().removeObjectForKey("id")
-        NSUserDefaults.standardUserDefaults().synchronize()
+        defaults.removeObjectForKey(settingUserID)
+        defaults.synchronize()
         user = nil
         navigationItem.title = "Logged Out"
         reset()
     }
     
     func login() {
-        if let id = NSUserDefaults.standardUserDefaults().stringForKey("id")
+        if let id = defaults.stringForKey(settingUserID)
         {
             let loginActivity = "Logging in"
             startedActivity(loginActivity)
@@ -217,10 +123,6 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     return
                 }
                 let user = user!
-                if user.id != Int(id) {
-                    NSUserDefaults.standardUserDefaults().setObject("\(user.id)", forKey: "id")
-                    NSUserDefaults.standardUserDefaults().synchronize()
-                }
                 s.didLogin(user)
             }
             return
@@ -231,8 +133,8 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             textField.placeholder = "Wallabee user name"
         }
         alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: { (action) -> Void in
-            NSUserDefaults.standardUserDefaults().setObject(alert.textFields![0].text, forKey: "id")
-            NSUserDefaults.standardUserDefaults().synchronize()
+            defaults.setObject(alert.textFields![0].text, forKey: settingUserID)
+            defaults.synchronize()
             self.login()
         }))
         presentViewController(alert, animated: true, completion: nil)
@@ -259,7 +161,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     func getNearby() {
-        if NSUserDefaults.standardUserDefaults().boolForKey("disableNearbySearch") == true {
+        if defaults.boolForKey(settingSearchNearby) == false {
             nearby = [SBPlace]()
             refreshList()
             return
@@ -321,19 +223,12 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func parseItems(items: [SBItemBase], place : SBPlace?)
     {
-        guard let savedItems = savedItems, mixReverseLookup = mixReverseLookup, pouchItemTypes = pouchItemTypes else { return }
+        guard let savedItems = savedItems, pouchItemTypes = pouchItemTypes else { return }
         var placeObjectsFound = placeObjects()
         
-        let minImprovement = NSUserDefaults.standardUserDefaults().integerForKey("minImprovement")
+        let minImprovement = defaults.integerForKey(settingMinimumImprovement)
         for item in items {
             if item.locked { continue }
-            
-            // SD?
-            if item.number < 10 && !NSUserDefaults.standardUserDefaults().boolForKey("disableSDSearch") {
-                print("Single Digit! - \(item.name)")
-                appendPlaceObject(&placeObjectsFound, section: sdSection, atPlace: place, item: item)
-                continue
-            }
             
             // Missing?
             if savedItems[item.itemTypeID] == nil && pouchItemTypes[item.itemTypeID] == nil {
@@ -342,39 +237,65 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 continue
             }
             
-            // DD?
-            if item.number < 100 && !NSUserDefaults.standardUserDefaults().boolForKey("disableDDSearch") {
-                print("DD - \(item.name)")
-                appendPlaceObject(&placeObjectsFound, section: ddSection, atPlace: place, item: item)
-                continue
+            var isMarketItem = false
+            var isOverpriced = false
+            if let marketItem = item as? SBMarketItem {
+                isMarketItem = true
+                isOverpriced = defaults.integerForKey(settingMaxMarketImprovementPrice) < marketItem.cost
             }
             
-            // TD?
-            if item.number < 1000 && !NSUserDefaults.standardUserDefaults().boolForKey("disableTDSearch") {
-                print("TD - \(item.name)")
-                appendPlaceObject(&placeObjectsFound, section: tdSection, atPlace: place, item: item)
-                continue
+            if !isMarketItem || (defaults.boolForKey(settingMarketImproveSearch) && !isOverpriced) {
+                // Improved?
+                if defaults.boolForKey(settingShowImprovements) {
+                    if let savedItem = savedItems[item.itemTypeID] {
+                        if item.numberClass.rawValue < savedItem.numberClass.rawValue {
+                            print("Significant improvement - \(item.name)")
+                            appendPlaceObject(&placeObjectsFound, section: significantImprovement, atPlace: place, item: item)
+                        }
+                        else if !defaults.boolForKey(settingSignificantImprovement) && item.number + minImprovement < savedItem.number {
+                            print("Improved - \(item.name)")
+                            appendPlaceObject(&placeObjectsFound, section: improveSection, atPlace: place, item: item)
+                            continue
+                        }
+                    }
+                }
             }
             
-            // 1xxx
-            if item.number < 2000 && NSUserDefaults.standardUserDefaults().boolForKey("enable1xxxSearch") {
-                print("1xxx - \(item.name)")
-                appendPlaceObject(&placeObjectsFound, section: onexxSection, atPlace: place, item: item)
-                continue
+            if !isMarketItem || defaults.boolForKey(settingMarketShowTD) {
+                // SD?
+                if item.numberClass == .SD && defaults.boolForKey(settingSDSearch) {
+                    print("Single Digit! - \(item.name)")
+                    appendPlaceObject(&placeObjectsFound, section: sdSection, atPlace: place, item: item)
+                    continue
+                }
+                
+                // DD?
+                if item.numberClass == .DD && defaults.boolForKey(settingDDSearch) {
+                    print("DD - \(item.name)")
+                    appendPlaceObject(&placeObjectsFound, section: ddSection, atPlace: place, item: item)
+                    continue
+                }
+                
+                // TD?
+                if item.numberClass == .TD && defaults.boolForKey(settingTDSearch) {
+                    print("TD - \(item.name)")
+                    appendPlaceObject(&placeObjectsFound, section: tdSection, atPlace: place, item: item)
+                    continue
+                }
+                
+                // 1xxx
+                if item.numberClass == .OneXXX && defaults.boolForKey(setting1xxxSearch) {
+                    print("1xxx - \(item.name)")
+                    appendPlaceObject(&placeObjectsFound, section: onexxSection, atPlace: place, item: item)
+                    continue
+                }
             }
             
             // Pickup for Mix?
-            if mixReverseLookup[item.itemTypeID] != nil && pouchItemTypes[item.itemTypeID] == nil {
-                print("Found item needed for mix - \(item.name)")
-                appendPlaceObject(&placeObjectsFound, section: mixPickupSection, atPlace: place, item: item)
-                continue
-            }
-            
-            // Improved?
-            if let savedItem = savedItems[item.itemTypeID] {
-                if item.number + minImprovement < savedItem.number {
-                    print("Improved - \(item.name)")
-                    appendPlaceObject(&placeObjectsFound, section: improveSection, atPlace: place, item: item)
+            if let mixReverseLookup = mixReverseLookup {
+                if defaults.boolForKey(settingMixHelper) && mixReverseLookup[item.itemTypeID] != nil && pouchItemTypes[item.itemTypeID] == nil {
+                    print("Found item needed for mix - \(item.name)")
+                    appendPlaceObject(&placeObjectsFound, section: mixPickupSection, atPlace: place, item: item)
                     continue
                 }
             }
@@ -483,7 +404,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         guard let user = user else { print("Waiting for user (\(self.user)) data before refresh"); return }
         guard let nearby = nearby else { print("Waiting for nearby (\(self.nearby)) information before refresh"); return }
         guard let savedItems = savedItems else { print("Waiting for savedItems (\(self.savedItems)) information before refresh"); return }
-        guard let mixReverseLookup = mixReverseLookup, _ = mixRequiredItems else { print("Waiting for Mix / saved items"); return }
+        if defaults.boolForKey(settingMixHelper) {
+            guard let _ = mixReverseLookup, _ = mixRequiredItems else { print("Waiting for Mix / saved items"); return }
+        }
         guard let pouchItemTypes = pouchItemTypes else { print("Waiting for pouch"); return }
         
         if refreshing { return }
@@ -526,7 +449,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 })
         }
         
-        if NSUserDefaults.standardUserDefaults().boolForKey("disableMarketSearch") == false {
+        if defaults.boolForKey(settingSearchMarket)  {
             // Check the Market
             let marketActivity = "Searching Market"
             startedActivity(marketActivity)
@@ -535,7 +458,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 guard let s = self else { return }
                 if error != nil { return }
                 if let items = items {
-                    let maxPrice = NSUserDefaults.standardUserDefaults().integerForKey("maxPrice")
+                    let maxPrice = defaults.boolForKey(settingLimitMarket) ? defaults.integerForKey(settingMarketLimit) : 0
                     var foundItems = [SBMarketItem]()
                     for item in items {
                         if maxPrice > 0 && item.cost > maxPrice {
@@ -550,65 +473,36 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         }
         
         // Check pouch
-        var foundMixes = [ SBItemType : Set<SBSavedItem> ]()
-        for itemType in pouchItemTypes.keys {
-            if let itemType = mixReverseLookup[itemType] {
-                var items = Set<SBSavedItem>()
-                var complete = true
-                for itemTypeID in itemType.mix {
-                    if let pouchItem = pouchItemTypes[itemTypeID] {
-                        items.insert(pouchItem)
+        if defaults.boolForKey(settingMixHelper) {
+            var foundMixes = [ SBItemType : Set<SBSavedItem> ]()
+            for itemType in pouchItemTypes.keys {
+                if let itemType = mixReverseLookup![itemType] {
+                    var items = Set<SBSavedItem>()
+                    var complete = true
+                    for itemTypeID in itemType.mix {
+                        if let pouchItem = pouchItemTypes[itemTypeID] {
+                            items.insert(pouchItem)
+                        }
+                        else
+                        {
+                            complete = false
+                            break
+                        }
                     }
-                    else
-                    {
-                        complete = false
-                        break
+                    if complete {
+                        foundMixes[itemType] = items
                     }
-                }
-                if complete {
-                    foundMixes[itemType] = items
                 }
             }
-        }
-        dispatch_sync(pouchSection.pendingRowLock) { () -> Void in
-            for (itemType,itemSet) in foundMixes
-            {
-                let mixRow = RecipeRow(items: Array(itemSet), itemType: itemType)
-                self.pouchSection.pendingRows.append(mixRow)
-            }
-        }
-        if foundMixes.count > 0 { shouldUpdateSections() }
-    }
-    
-    func shouldUpdateSections() {
-        if willUpdateSections { return }
-        willUpdateSections = true
-        dispatch_async(dispatch_get_main_queue()) { [weak self] () -> Void in
-            guard let s = self else { return }
-            s.updateSections()
-            s.willUpdateSections = false
-        }
-    }
-    
-    func updateSections() {
-        tableView.beginUpdates()
-        var sectionOn = 0
-        for section in sections {
-            dispatch_sync(section.pendingRowLock, { () -> Void in
-                while section.pendingRows.count > 0 {
-                    let index = NSIndexPath(forRow: section.rows.count, inSection: sectionOn)
-                    self.tableView.insertRowsAtIndexPaths([index], withRowAnimation: .Automatic)
-                    if section.rows.count == 0 {
-                        // First row, show header
-                        self.tableView.reloadSections(NSIndexSet(index: sectionOn), withRowAnimation: .Automatic)
-                    }
-                    section.rows.append(section.pendingRows.first!)
-                    section.pendingRows.removeFirst()
+            dispatch_sync(pouchSection.pendingRowLock) { () -> Void in
+                for (itemType,itemSet) in foundMixes
+                {
+                    let mixRow = RecipeRow(items: Array(itemSet), itemType: itemType)
+                    self.pouchSection.pendingRows.append(mixRow)
                 }
-            })
-            sectionOn++
+            }
+            if foundMixes.count > 0 { shouldUpdateSections() }
         }
-        tableView.endUpdates()
     }
     
     func didLogin(user : SBUser) {
@@ -688,6 +582,10 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     }
     
     func addMixRequirements() {
+        if !defaults.boolForKey(settingMixHelper) {
+            refreshList()
+            return
+        }
         let activity = "Updating Set List"
         startedActivity(activity)
         bee.setList { [weak self] (error, sets) -> Void in
@@ -775,90 +673,18 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             s.refreshList()
         }
     }
-    
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return sections.count
-    }
-    
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        let section = sections[section]
-        if section.rows.count > 0 {
-            return UITableViewAutomaticDimension
-        }
-        else
-        {
-            return 1
-        }
-    }
-    
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        let section = sections[section]
-        if section.rows.count > 0 {
-            return UITableViewAutomaticDimension
-        }
-        else
-        {
-            return 1
-        }
-    }
-    
-    override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let section = sections[section]
-        if section.rows.count > 0 {
-            return section.title
-        }
-        else
-        {
-            return nil
-        }
-    }
-    
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return sections[section].rows.count
-    }
-    
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let row = sections[indexPath.section].rows[indexPath.row]
-        let cell = tableView.dequeueReusableCellWithIdentifier(row.reuse)!
-        row.setup(cell: cell, table: tableView)
-        return cell
-    }
-    
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        let row = sections[indexPath.section].rows[indexPath.row]
-        row.select(tableView: tableView, indexPath: indexPath)
-    }
 }
 
-class ActionSection : Hashable {
-    let title : String
+class ActionSection : PWSection {
     let rowDescriptor : String
-    let pendingRowLock : dispatch_queue_t
-    
-    var rows : [ ActionRow ] = [ActionRow]()
-    var pendingRows : [ ActionRow ] = [ActionRow]()
-    init(title : String, rowDescriptor : String) {
-        self.title = title
-        self.pendingRowLock = dispatch_queue_create("actionTVC.\(title)", nil)
+    init(title: String, rowDescriptor: String) {
         self.rowDescriptor = rowDescriptor
-    }
-    var hashValue: Int {
-        get {
-            return title.hashValue
-        }
+        super.init(title: title)
     }
 }
 
-func ==(lhs: ActionSection, rhs: ActionSection) -> Bool {
-    return lhs.title == rhs.title
-}
-
-class ActionRow {
-    var reuse : String = "basic"
-    var setup : (cell : UITableViewCell, table : UITableView) -> Void = { _,_ in }
-    var select : (tableView : UITableView, indexPath : NSIndexPath) -> Void = { tableView, indexPath in
-        tableView.deselectRowAtIndexPath(indexPath, animated: false)
-    }
+class ActionRow : PWRow {
+    
 }
 
 class RecipeRow : ActionRow {
@@ -878,7 +704,7 @@ class RecipeRow : ActionRow {
         }
         select = { tableView, indexPath in
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
-            if NSUserDefaults.standardUserDefaults().boolForKey("pouchWarned") != true {
+            if defaults.boolForKey("pouchWarned") != true {
                 let alert = UIAlertController(title: "Pouch Items", message: "Piratewalla can't jump you right into your pouch (Yet), you'll need to manually go into your pouch for now", preferredStyle: .Alert)
                 alert.addAction(UIAlertAction(title: "Got it", style: .Default, handler: { (_) -> Void in
                     UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
@@ -886,8 +712,8 @@ class RecipeRow : ActionRow {
                 if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {
                     rootVC.presentViewController(alert, animated: true, completion: nil)
                 }
-                NSUserDefaults.standardUserDefaults().setBool(true, forKey: "pouchWarned")
-                NSUserDefaults.standardUserDefaults().synchronize()
+                defaults.setBool(true, forKey: "pouchWarned")
+                defaults.synchronize()
                 return
             }
             UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
@@ -918,7 +744,7 @@ class MarketRow : ItemRow {
         }
         select = { tableView, indexPath in
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
-            if NSUserDefaults.standardUserDefaults().boolForKey("marketWarned") != true {
+            if defaults.boolForKey("marketWarned") != true {
                 let alert = UIAlertController(title: "Market Items", message: "Piratewalla can't jump you right into the Market view at this time (Yet), you'll need to manually go into the appropriate part of the market on your own for now", preferredStyle: .Alert)
                 alert.addAction(UIAlertAction(title: "Got it", style: .Default, handler: { (_) -> Void in
                     UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
@@ -926,8 +752,8 @@ class MarketRow : ItemRow {
                 if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {
                     rootVC.presentViewController(alert, animated: true, completion: nil)
                 }
-                NSUserDefaults.standardUserDefaults().setBool(true, forKey: "marketWarned")
-                NSUserDefaults.standardUserDefaults().synchronize()
+                defaults.setBool(true, forKey: "marketWarned")
+                defaults.synchronize()
                 return
             }
             UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
@@ -950,7 +776,7 @@ class PickupRow : ItemRow {
         select = { tableView, indexPath in
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
             if place.id == helicarrierID {
-                if NSUserDefaults.standardUserDefaults().boolForKey("helicarrierWarned") != true {
+                if defaults.boolForKey("helicarrierWarned") != true {
                     let alert = UIAlertController(title: "Helicarrier", message: "Piratewalla can't jump you right into the Helicarrier view at this time, you'll need to manually go into, Places -> Foragers Helicarrier to collect these", preferredStyle: .Alert)
                     alert.addAction(UIAlertAction(title: "Got it", style: .Default, handler: { (_) -> Void in
                         UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
@@ -958,8 +784,8 @@ class PickupRow : ItemRow {
                     if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {
                         rootVC.presentViewController(alert, animated: true, completion: nil)
                     }
-                    NSUserDefaults.standardUserDefaults().setBool(true, forKey: "helicarrierWarned")
-                    NSUserDefaults.standardUserDefaults().synchronize()
+                    defaults.setBool(true, forKey: "helicarrierWarned")
+                    defaults.synchronize()
                 }
                 else
                 {

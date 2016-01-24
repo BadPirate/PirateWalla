@@ -43,4 +43,18 @@ class SBUser : SBObject {
             completion(error: error, uniqueItems: uniqueItems)
         }
     }
+    
+    func pouch(completion : (error : NSError?, items : Set<SBSavedItem>?) -> Void) {
+        bee.get("/users/\(self.id)/pouch") { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            var items : Set<SBSavedItem>? = nil
+            if let data = data, itemsArray = data["items"] as? [ [String : AnyObject] ] {
+                items = Set<SBSavedItem>()
+                for dictionary in itemsArray {
+                    items!.insert(SBSavedItem(dictionary: dictionary, type: dictionary["item_type_id"] as! String, bee: s.bee))
+                }
+            }
+            completion(error: error, items: items)
+        }
+    }
 }

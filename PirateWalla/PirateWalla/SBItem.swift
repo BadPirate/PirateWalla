@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 class SBItem : SBSavedItem {
     init(dictionary: [String : AnyObject], bee: SwiftBee) {
@@ -90,6 +91,25 @@ class SBSavedItem : SBItemBase {
             return NSURL(string: string)
         }
         return nil
+    }
+    
+    
+    func image(size: Int, completion : (error: NSError?, image : UIImage?) -> Void) {
+        let scale = UIScreen.mainScreen().scale
+        let size = Int(CGFloat(size) * scale)
+        if let url = imageURL(size) {
+            bee.session.dataTaskWithURL(url, completionHandler: { (data, _, error) -> Void in
+                var image : UIImage? = nil
+                if let data = data {
+                    image = UIImage(data: data, scale: scale)
+                }
+                completion(error: error, image: image)
+            }).resume()
+        }
+        else
+        {
+            completion(error: nil, image: nil)
+        }
     }
 }
 

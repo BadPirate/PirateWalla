@@ -21,6 +21,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     // Sections
     let sections : [ActionSection]
     let missingSection : ActionSection
+    let mixPickupSection : ActionSection
     let improveSection : ActionSection
     let sdSection : ActionSection
     let ddSection : ActionSection
@@ -37,6 +38,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     var nearby : [ SBPlace ]?
     let savedItemsLock : dispatch_queue_t
     var savedItems : [ Int : SBSavedItem ]?
+    typealias Mixes = [ Int : Set<Int> ]
+    var mixRequiredItems : Mixes?
+    var mixReverseLookup : [ Int : SBItemType ]?
     var refreshing = false
     var refreshLocation = false
     
@@ -47,8 +51,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         onexxSection = ActionSection(title: "1xxx", rowDescriptor: "1xxx")
         missingSection = ActionSection(title: "Missing Items", rowDescriptor: "Missing")
         improveSection = ActionSection(title: "Improved Items", rowDescriptor: "Improved")
+        mixPickupSection = ActionSection(title: "Pickup for Mix", rowDescriptor: "Mix")
         
-        sections = [missingSection,sdSection,ddSection,tdSection,onexxSection,improveSection]
+        sections = [missingSection,sdSection,ddSection,tdSection,onexxSection,mixPickupSection,improveSection]
         let bee = SwiftBee()
         self.bee = bee
         self.cloudCache = CloudCache(bee: bee)
@@ -309,7 +314,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func parseItems(items: [SBItemBase], place : SBPlace?)
     {
-        guard let savedItems = savedItems else { return }
+        guard let savedItems = savedItems, mixReverseLookup = mixReverseLookup else { return }
         var placeObjectsFound = placeObjects()
         
         let minImprovement = NSUserDefaults.standardUserDefaults().integerForKey("minImprovement")
@@ -348,6 +353,13 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             if item.number < 2000 && NSUserDefaults.standardUserDefaults().boolForKey("enable1xxxSearch") {
                 print("1xxx - \(item.name)")
                 appendPlaceObject(&placeObjectsFound, section: onexxSection, atPlace: place, item: item)
+                continue
+            }
+            
+            // Pickup for Mix?
+            if mixReverseLookup[item.itemTypeID] != nil {
+                print("Found item needed for mix - \(item.name)")
+                appendPlaceObject(&placeObjectsFound, section: mixPickupSection, atPlace: place, item: item)
                 continue
             }
             
@@ -464,6 +476,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         guard let user = user else { print("Waiting for user (\(self.user)) data before refresh"); return }
         guard let nearby = nearby else { print("Waiting for nearby (\(self.nearby)) information before refresh"); return }
         guard let savedItems = savedItems else { print("Waiting for savedItems (\(self.savedItems)) information before refresh"); return }
+        guard let mixReverseLookup = mixReverseLookup, mixRequiredItems = mixRequiredItems else { print("Waiting for Mix / saved items"); return }
         
         if refreshing { return }
         refreshing = true
@@ -613,8 +626,59 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     }
                 }
             })
-
-            s.refreshList()
+            s.getMixRequirements()
+        }
+    }
+    
+    func getMixRequirements() {
+        let activity = "Updating Set List"
+        startedActivity(activity)
+        bee.setList { [weak self] (error, sets) -> Void in
+            guard let s = self else { return }
+            s.stoppedActivity(activity)
+            if let error = error {
+                AppDelegate.handleError(error, button: "Okay", title: "Mix error", completion: { () -> Void in
+                    s.mixRequiredItems = Mixes()
+                    s.refreshList()
+                })
+                return
+            }
+            let sets = sets!
+            var setIdentifiers = Set<Int>()
+            for set in sets {
+                setIdentifiers.insert(set.setID)
+            }
+            let activity = "Calculating mixes"
+            s.startedActivity(activity)
+            s.cloudCache.sets(setIdentifiers, completion: { [weak s] (error, sets) -> Void in
+                guard let s = s else { return }
+                s.stoppedActivity(activity)
+                if let error = error {
+                    AppDelegate.handleError(error, button: "Okay", title: "Mix error", completion: { () -> Void in
+                        s.mixRequiredItems = Mixes()
+                        s.refreshList()
+                    })
+                    return
+                }
+                let sets = sets!
+                dispatch_sync(s.savedItemsLock, { () -> Void in
+                    guard let savedItems = s.savedItems else { return }
+                    s.mixRequiredItems = Mixes()
+                    s.mixReverseLookup = [ Int : SBItemType ]()
+                    for set in sets {
+                        for itemType in set.itemTypes {
+                            if savedItems[itemType.id] == nil {
+                                let mix = itemType.mix
+                                s.mixRequiredItems![itemType.id] = mix
+                                for mixItem in mix {
+                                    s.mixReverseLookup![mixItem] = itemType
+                                }
+                            }
+                        }
+                    }
+                })
+                s.refreshList()
+            })
         }
     }
     

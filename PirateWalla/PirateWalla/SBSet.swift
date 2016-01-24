@@ -8,7 +8,26 @@
 
 import Foundation
 
-class SBSet : SBObject {
+class SBSet : SBSetBase {
+    var itemTypes : [SBItemType] {
+        get {
+            if let itemDictionaries = data["items"] as? [[ String : AnyObject ]] {
+                var items = [SBItemType]()
+                for itemDictionary in itemDictionaries {
+                    let item = SBItemType(dictionary: itemDictionary, bee: bee)
+                    items.append(item)
+                }
+                return items
+            }
+            else
+            {
+                return [SBItemType]()
+            }
+        }
+    }
+}
+
+class SBSetBase : SBObject {
     class func errorSet(identifier : Int, bee: SwiftBee) -> SBSet {
         print("Error set - \(identifier)")
         return SBSet(dictionary: [ "id" : "\(identifier)", "name" : "Error" ], bee: bee)

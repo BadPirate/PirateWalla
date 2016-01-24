@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B41123181C547CD600363B90 /* PWTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41123171C547CD600363B90 /* PWTVC.swift */; };
+		B411231C1C54804A00363B90 /* SettingsTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B411231B1C54804A00363B90 /* SettingsTVC.swift */; };
 		B4EB74621C3CE8B5009885C7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */; };
 		B4EB74691C3CE8B5009885C7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B4EB74671C3CE8B5009885C7 /* Main.storyboard */; };
 		B4EB746B1C3CE8B5009885C7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B4EB746A1C3CE8B5009885C7 /* Assets.xcassets */; };
@@ -23,6 +25,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B41123171C547CD600363B90 /* PWTVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PWTVC.swift; sourceTree = "<group>"; };
+		B411231B1C54804A00363B90 /* SettingsTVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsTVC.swift; sourceTree = "<group>"; };
 		B4EB745E1C3CE8B5009885C7 /* PirateWalla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PirateWalla.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B4EB74681C3CE8B5009885C7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -54,6 +58,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B41123191C547CED00363B90 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				B4F382271C455CAF00274826 /* CloudCache.swift */,
+				B41123171C547CD600363B90 /* PWTVC.swift */,
+				B4EB747A1C3D6530009885C7 /* ActionTVC.swift */,
+				B411231B1C54804A00363B90 /* SettingsTVC.swift */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
 		B4EB74551C3CE8B5009885C7 = {
 			isa = PBXGroup;
 			children = (
@@ -74,12 +89,11 @@
 		B4EB74601C3CE8B5009885C7 /* PirateWalla */ = {
 			isa = PBXGroup;
 			children = (
+				B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */,
+				B41123191C547CED00363B90 /* Classes */,
 				B4F382291C455D5500274826 /* PirateWalla.entitlements */,
 				B4EB747F1C3D6AC6009885C7 /* PirateWalla-Bridging-Header.h */,
-				B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */,
 				B4EB74671C3CE8B5009885C7 /* Main.storyboard */,
-				B4F382271C455CAF00274826 /* CloudCache.swift */,
-				B4EB747A1C3D6530009885C7 /* ActionTVC.swift */,
 				B4EB746A1C3CE8B5009885C7 /* Assets.xcassets */,
 				B4EB746C1C3CE8B5009885C7 /* LaunchScreen.storyboard */,
 				B4EB746F1C3CE8B5009885C7 /* Info.plist */,
@@ -183,9 +197,11 @@
 				B4F382231C44248600274826 /* SBSet.swift in Sources */,
 				B4F382281C455CAF00274826 /* CloudCache.swift in Sources */,
 				B4EB747B1C3D6530009885C7 /* ActionTVC.swift in Sources */,
+				B411231C1C54804A00363B90 /* SettingsTVC.swift in Sources */,
 				B4EB747D1C3D6890009885C7 /* SBPlace.swift in Sources */,
 				B4EB74871C3D8B65009885C7 /* SBItem.swift in Sources */,
 				B4EB74761C3CEA23009885C7 /* SwiftBee.swift in Sources */,
+				B41123181C547CD600363B90 /* PWTVC.swift in Sources */,
 				B4EB74621C3CE8B5009885C7 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

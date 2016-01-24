@@ -29,6 +29,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var window: UIWindow?
     
+    class func presentAlert(alert : UIAlertController) {
+        if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {
+            rootVC.presentViewController(alert, animated: true, completion: nil)
+        }
+    }
+    
     class func handleError(error : NSError, completion : EmptyCompletion) {
         handleError(error, button: "Retry", title: "Error", completion: completion)
     }

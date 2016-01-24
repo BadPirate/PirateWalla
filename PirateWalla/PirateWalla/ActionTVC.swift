@@ -27,6 +27,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     let ddSection : ActionSection
     let tdSection : ActionSection
     let onexxSection : ActionSection
+    let pouchSection : ActionSection
     
     var willUpdateSections : Bool = false
     var willUpdateProgress : Bool = false
@@ -38,6 +39,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     var nearby : [ SBPlace ]?
     let savedItemsLock : dispatch_queue_t
     var savedItems : [ Int : SBSavedItem ]?
+    var pouchItemTypes : [ Int : SBSavedItem ]?
     typealias Mixes = [ Int : Set<Int> ]
     var mixRequiredItems : Mixes?
     var mixReverseLookup : [ Int : SBItemType ]?
@@ -52,8 +54,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         missingSection = ActionSection(title: "Missing Items", rowDescriptor: "Missing")
         improveSection = ActionSection(title: "Improved Items", rowDescriptor: "Improved")
         mixPickupSection = ActionSection(title: "Pickup for Mix", rowDescriptor: "Mix")
+        pouchSection = ActionSection(title: "Pouch", rowDescriptor: "Pouch")
         
-        sections = [missingSection,sdSection,ddSection,tdSection,onexxSection,mixPickupSection,improveSection]
+        sections = [missingSection,pouchSection,sdSection,ddSection,tdSection,onexxSection,mixPickupSection,improveSection]
         let bee = SwiftBee()
         self.bee = bee
         self.cloudCache = CloudCache(bee: bee)
@@ -176,6 +179,9 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         nearby = nil
         dispatch_sync(savedItemsLock) { () -> Void in
             self.savedItems = nil
+            self.mixRequiredItems = nil
+            self.mixReverseLookup = nil
+            self.pouchItemTypes = nil
         }
         refreshing = false
     }
@@ -184,6 +190,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         reset()
         getNearby()
         getSavedItems()
+        getPouch()
     }
     
     func logout() {
@@ -314,7 +321,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
     
     func parseItems(items: [SBItemBase], place : SBPlace?)
     {
-        guard let savedItems = savedItems, mixReverseLookup = mixReverseLookup else { return }
+        guard let savedItems = savedItems, mixReverseLookup = mixReverseLookup, pouchItemTypes = pouchItemTypes else { return }
         var placeObjectsFound = placeObjects()
         
         let minImprovement = NSUserDefaults.standardUserDefaults().integerForKey("minImprovement")
@@ -329,7 +336,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             }
             
             // Missing?
-            if savedItems[item.itemTypeID] == nil {
+            if savedItems[item.itemTypeID] == nil && pouchItemTypes[item.itemTypeID] == nil {
                 print("Missing - \(item.name)")
                 appendPlaceObject(&placeObjectsFound, section: missingSection, atPlace: place, item: item)
                 continue
@@ -357,7 +364,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
             }
             
             // Pickup for Mix?
-            if mixReverseLookup[item.itemTypeID] != nil {
+            if mixReverseLookup[item.itemTypeID] != nil && pouchItemTypes[item.itemTypeID] == nil {
                 print("Found item needed for mix - \(item.name)")
                 appendPlaceObject(&placeObjectsFound, section: mixPickupSection, atPlace: place, item: item)
                 continue
@@ -476,7 +483,8 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         guard let user = user else { print("Waiting for user (\(self.user)) data before refresh"); return }
         guard let nearby = nearby else { print("Waiting for nearby (\(self.nearby)) information before refresh"); return }
         guard let savedItems = savedItems else { print("Waiting for savedItems (\(self.savedItems)) information before refresh"); return }
-        guard let mixReverseLookup = mixReverseLookup, mixRequiredItems = mixRequiredItems else { print("Waiting for Mix / saved items"); return }
+        guard let mixReverseLookup = mixReverseLookup, _ = mixRequiredItems else { print("Waiting for Mix / saved items"); return }
+        guard let pouchItemTypes = pouchItemTypes else { print("Waiting for pouch"); return }
         
         if refreshing { return }
         refreshing = true
@@ -540,6 +548,36 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                 }
             }
         }
+        
+        // Check pouch
+        var foundMixes = [ SBItemType : Set<SBSavedItem> ]()
+        for itemType in pouchItemTypes.keys {
+            if let itemType = mixReverseLookup[itemType] {
+                var items = Set<SBSavedItem>()
+                var complete = true
+                for itemTypeID in itemType.mix {
+                    if let pouchItem = pouchItemTypes[itemTypeID] {
+                        items.insert(pouchItem)
+                    }
+                    else
+                    {
+                        complete = false
+                        break
+                    }
+                }
+                if complete {
+                    foundMixes[itemType] = items
+                }
+            }
+        }
+        dispatch_sync(pouchSection.pendingRowLock) { () -> Void in
+            for (itemType,itemSet) in foundMixes
+            {
+                let mixRow = RecipeRow(items: Array(itemSet), itemType: itemType)
+                self.pouchSection.pendingRows.append(mixRow)
+            }
+        }
+        if foundMixes.count > 0 { shouldUpdateSections() }
     }
     
     func shouldUpdateSections() {
@@ -578,6 +616,7 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         self.navigationItem.title = user.name
         self.user = user
         self.getSavedItems()
+        self.getPouch()
     }
     
     func getSavedItems() {
@@ -605,6 +644,24 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
         }
     }
     
+    func getPouch() {
+        guard let user = user else { login(); return }
+        let activity = "Getting Pouch Items"
+        startedActivity(activity)
+        user.pouch { [weak self ] (error, items) -> Void in
+            guard let s = self else { return }
+            s.stoppedActivity(activity)
+            let items = items!
+            dispatch_sync(s.savedItemsLock, { () -> Void in
+                s.pouchItemTypes = [ Int : SBItem ]()
+                for item in items {
+                    s.pouchItemTypes![item.itemTypeID] = item
+                }
+            })
+            s.refreshList()
+        }
+    }
+    
     func addUniqueItems() {
         guard let user = user else { login(); return }
         let uniqueItemsActivity = "Getting unique items"
@@ -626,11 +683,11 @@ class ActionTVC : UITableViewController, CLLocationManagerDelegate {
                     }
                 }
             })
-            s.getMixRequirements()
+            s.addMixRequirements()
         }
     }
     
-    func getMixRequirements() {
+    func addMixRequirements() {
         let activity = "Updating Set List"
         startedActivity(activity)
         bee.setList { [weak self] (error, sets) -> Void in
@@ -804,6 +861,40 @@ class ActionRow {
     }
 }
 
+class RecipeRow : ActionRow {
+    let items : [SBSavedItem]
+    let bee : SwiftBee
+    let itemType : SBItemType
+    init(items : [SBSavedItem], itemType : SBItemType) {
+        self.items = items
+        self.itemType = itemType
+        self.bee = itemType.bee
+        super.init()
+        reuse = "recipe"
+        setup = { cell,_ in
+            if let cell = cell as? RecipeCell {
+                cell.row = self
+            }
+        }
+        select = { tableView, indexPath in
+            tableView.deselectRowAtIndexPath(indexPath, animated: true)
+            if NSUserDefaults.standardUserDefaults().boolForKey("pouchWarned") != true {
+                let alert = UIAlertController(title: "Pouch Items", message: "Piratewalla can't jump you right into your pouch (Yet), you'll need to manually go into your pouch for now", preferredStyle: .Alert)
+                alert.addAction(UIAlertAction(title: "Got it", style: .Default, handler: { (_) -> Void in
+                    UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
+                }))
+                if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {
+                    rootVC.presentViewController(alert, animated: true, completion: nil)
+                }
+                NSUserDefaults.standardUserDefaults().setBool(true, forKey: "pouchWarned")
+                NSUserDefaults.standardUserDefaults().synchronize()
+                return
+            }
+            UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://inbox")!)
+        }
+    }
+}
+
 class ItemRow : ActionRow {
     let items : [SBItem]
     let bee : SwiftBee
@@ -883,6 +974,55 @@ class PickupRow : ItemRow {
     }
 }
 
+class RecipeCell : UITableViewCell {
+    @IBOutlet var stack : UIStackView?
+    @IBOutlet var plus : UIImageView?
+    @IBOutlet var into : UIImageView?
+    @IBOutlet var intoResult : UIImageView?
+    
+    var row : RecipeRow? {
+        didSet {
+            let stack = self.stack!, plus = self.plus!, into = self.into!, intoResult = self.intoResult!
+            
+            stack.subviews.forEach { (view) -> () in
+                view.removeFromSuperview()
+            }
+            if let row = row {
+                for item in row.items {
+                    let itemImageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
+                    item.image(50, completion: { [weak itemImageView] (error, image) -> Void in
+                        guard let itemImageView = itemImageView, image = image else { return }
+                        dispatch_async(dispatch_get_main_queue(), { [weak itemImageView] () -> Void in
+                            guard let itemImageView = itemImageView else { return }
+                            itemImageView.image = image
+                        })
+                    })
+                    stack.addArrangedSubview(itemImageView)
+                    if item !== row.items.last {
+                        let plusCopy = UIImageView(image: plus.image)
+                        plusCopy.addConstraint(NSLayoutConstraint(item: plusCopy, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: plus.frame.size.width))
+                        stack.addArrangedSubview(plusCopy)
+                    }
+                }
+                stack.addArrangedSubview(into)
+                intoResult.image = nil
+                stack.addArrangedSubview(intoResult)
+                row.itemType.image(50, completion: { [weak self] (error, image) -> Void in
+                    guard let s = self else { return }
+                    if s.row !== row { return }
+                    if let image = image {
+                        dispatch_async(dispatch_get_main_queue(), { [weak s] () -> Void in
+                            guard let s = s else { return }
+                            if s.row !== row { return }
+                            s.intoResult!.image = image
+                        })
+                    }
+                })
+            }
+        }
+    }
+}
+
 class ItemCell : UITableViewCell {
     @IBOutlet var itemsStack : UIStackView?
     @IBOutlet var placeImageView : UIImageView?
@@ -904,15 +1044,9 @@ class ItemCell : UITableViewCell {
         }
     }
     
-    var imageSize : Int {
-        get {
-            return UIScreen.mainScreen().scale == 1.0 ? 50 : 100
-        }
-    }
-    
     var scale : CGFloat {
         get {
-            return CGFloat(imageSize) / CGFloat(50)
+            return UIScreen.mainScreen().scale
         }
     }
     
@@ -926,21 +1060,20 @@ class ItemCell : UITableViewCell {
                     let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
                     imageView.addConstraint(NSLayoutConstraint(item: imageView, attribute: .Width, relatedBy: .GreaterThanOrEqual, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: minimumItemWidth))
                     imageView.image = blankImage
-                    if let url = item.imageURL(imageSize) {
-                        item.bee.session.dataTaskWithURL(url, completionHandler: { [weak self, weak imageView] (data, _, error) -> Void in
-                            guard let s = self, imageView = imageView else { return }
-                            if s.row !== row { return }
-                            if let error = error {
-                                print("Error loading image - \(error)")
-                                return
-                            }
-                            if let data = data {
-                                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                                    imageView.image = UIImage(data: data, scale: s.scale)
-                                })
-                            }
-                            }).resume()
-                    }
+                    item.image(50, completion: { [weak self, weak imageView] (error, image) -> Void in
+                        guard let s = self, imageView = imageView else { return }
+                        if s.row !== row { return }
+                        if let error = error {
+                            print("Error loading image - \(error)")
+                            return
+                        }
+                        if let image = image {
+                            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                                imageView.image = image
+                            })
+                        }
+                    })
+
                     imageViews.append(imageView)
                 }
             }
@@ -1010,7 +1143,8 @@ class MarketCell : ItemCell {
             cleanup()
             if let row = row as? MarketRow {
                 updateItemStack()
-                if let url = row.set.imageURL(imageSize) {
+                let size = Int(50 * UIScreen.mainScreen().scale)
+                if let url = row.set.imageURL(size) {
                     setPlaceImage(url)
                 }
                 label!.text = row.set.name
@@ -1083,7 +1217,8 @@ class PickupCell : ItemCell, CLLocationManagerDelegate {
                 checkLocation()
                 locationManager.startUpdatingLocation()
                 updateItemStack()
-                if let url = row.place.imageURL(imageSize) {
+                let size = Int(50 * UIScreen.mainScreen().scale)
+                if let url = row.place.imageURL(size) {
                     setPlaceImage(url)
                 }
                 label!.text = row.place.name

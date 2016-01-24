@@ -15,8 +15,72 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
                         <prototypes>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="pickup" id="xJK-Xz-fqI" customClass="PickupCell" customModule="PirateWalla" customModuleProvider="target">
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="recipe" id="Fgg-cO-SwU" customClass="RecipeCell" customModule="PirateWalla" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="114" width="600" height="66"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Fgg-cO-SwU" id="rRe-n6-ajp">
+                                    <rect key="frame" x="0.0" y="0.0" width="600" height="65"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="QpG-Dp-VjY">
+                                            <rect key="frame" x="8" y="8" width="215" height="49"/>
+                                            <subviews>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qAL-7r-Sh4">
+                                                    <rect key="frame" x="0.0" y="0.0" width="50" height="49"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="50" id="PpY-05-3BC"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="plus" translatesAutoresizingMaskIntoConstraints="NO" id="5XG-Uy-pDV">
+                                                    <rect key="frame" x="58" y="18" width="14" height="14"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="14" id="2pa-8E-HNm"/>
+                                                        <constraint firstAttribute="width" constant="14" id="f3r-rN-inc"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e2s-Tn-iwN">
+                                                    <rect key="frame" x="80" y="0.0" width="50" height="49"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="50" id="djp-Qx-404"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="becomes" translatesAutoresizingMaskIntoConstraints="NO" id="fdJ-xc-Fj0">
+                                                    <rect key="frame" x="138" y="17" width="19" height="16"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="19" id="Jnx-ay-qd8"/>
+                                                        <constraint firstAttribute="height" constant="16" id="jbu-lY-EZ1"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tch-Ao-BgU">
+                                                    <rect key="frame" x="165" y="0.0" width="50" height="49"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="50" id="mLa-zw-VlL"/>
+                                                    </constraints>
+                                                </imageView>
+                                            </subviews>
+                                        </stackView>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="QpG-Dp-VjY" firstAttribute="top" secondItem="rRe-n6-ajp" secondAttribute="topMargin" id="3gc-9A-fcK"/>
+                                        <constraint firstAttribute="bottomMargin" secondItem="QpG-Dp-VjY" secondAttribute="bottom" id="C6v-UA-mHJ"/>
+                                        <constraint firstAttribute="trailingMargin" secondItem="QpG-Dp-VjY" secondAttribute="trailing" id="RPQ-5n-KeX"/>
+                                        <constraint firstItem="QpG-Dp-VjY" firstAttribute="leading" secondItem="rRe-n6-ajp" secondAttribute="leadingMargin" id="Tpn-EJ-oPs"/>
+                                    </constraints>
+                                    <variation key="default">
+                                        <mask key="constraints">
+                                            <exclude reference="RPQ-5n-KeX"/>
+                                        </mask>
+                                    </variation>
+                                </tableViewCellContentView>
+                                <connections>
+                                    <outlet property="into" destination="fdJ-xc-Fj0" id="x13-ng-7Su"/>
+                                    <outlet property="intoResult" destination="Tch-Ao-BgU" id="AuE-mw-i9V"/>
+                                    <outlet property="plus" destination="5XG-Uy-pDV" id="m0b-rK-ooi"/>
+                                    <outlet property="stack" destination="QpG-Dp-VjY" id="lf0-y4-Oib"/>
+                                </connections>
+                            </tableViewCell>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="pickup" id="xJK-Xz-fqI" customClass="PickupCell" customModule="PirateWalla" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="180" width="600" height="66"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="xJK-Xz-fqI" id="Sqa-uA-Kot">
                                     <rect key="frame" x="0.0" y="0.0" width="600" height="65"/>
@@ -102,7 +166,7 @@
                                 </connections>
                             </tableViewCell>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="market" id="jrB-ip-TuS" userLabel="market" customClass="MarketCell" customModule="PirateWalla" customModuleProvider="target">
-                                <rect key="frame" x="0.0" y="180" width="600" height="66"/>
+                                <rect key="frame" x="0.0" y="246" width="600" height="66"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="jrB-ip-TuS" id="lWJ-5T-D5o">
                                     <rect key="frame" x="0.0" y="0.0" width="600" height="65"/>
@@ -230,9 +294,11 @@
         </scene>
     </scenes>
     <resources>
+        <image name="becomes" width="19" height="16"/>
         <image name="map_marker" width="16" height="26"/>
         <image name="market" width="28" height="20"/>
         <image name="more" width="28" height="6"/>
+        <image name="plus" width="14" height="14"/>
         <image name="settings" width="26" height="26"/>
     </resources>
 </document>

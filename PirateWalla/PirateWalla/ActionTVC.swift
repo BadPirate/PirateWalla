@@ -51,7 +51,7 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         significantImprovement = ActionSection(title: "Significant Improvement", rowDescriptor: "Improved")
         mixPickupSection = ActionSection(title: "Pickup for Mix", rowDescriptor: "Mix")
         pouchSection = ActionSection(title: "Pouch", rowDescriptor: "Pouch")
-        let bee = SwiftBee()
+        let bee = sharedBee
         self.bee = bee
         self.cloudCache = CloudCache(bee: bee)
         savedItemsLock = dispatch_queue_create("SavedItemsLock", nil)
@@ -60,14 +60,9 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
     }
     
     override func viewDidLoad() {
+        super.viewDidLoad()
         self.navigationItem.title = "Log in"
         locationManager.delegate = self
-        if let navigationController = navigationController {
-            navigationController.toolbarHidden = false
-        }
-        progressView.textAlignment = .Center
-        progressView.adjustsFontSizeToFitWidth = true
-        toolbarItems = [UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil),UIBarButtonItem(customView: progressView),UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil)]
         login()
         getNearby()
     }
@@ -722,7 +717,8 @@ class RecipeRow : ActionRow {
 }
 
 class ItemRow : ActionRow {
-    let items : [SBItem]
+    var items : [SBItem]
+    let itemsLock = dispatch_queue_create("ItemsLock", nil)
     let bee : SwiftBee
     init(items : [SBItem], bee: SwiftBee) {
         self.items = items
@@ -849,7 +845,7 @@ class RecipeCell : UITableViewCell {
     }
 }
 
-class ItemCell : UITableViewCell {
+class ItemCell : PWCell {
     @IBOutlet var itemsStack : UIStackView?
     @IBOutlet var placeImageView : UIImageView?
     @IBOutlet var label : UILabel?
@@ -878,30 +874,32 @@ class ItemCell : UITableViewCell {
     
     var imageViews = [UIImageView]()
     
-    var row : ItemRow? {
+    override var row : PWRow? {
         didSet {
             imageViews.removeAll()
-            if let row = row {
-                for item in row.items {
-                    let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
-                    imageView.addConstraint(NSLayoutConstraint(item: imageView, attribute: .Width, relatedBy: .GreaterThanOrEqual, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: minimumItemWidth))
-                    imageView.image = blankImage
-                    item.image(50, completion: { [weak self, weak imageView] (error, image) -> Void in
-                        guard let s = self, imageView = imageView else { return }
-                        if s.row !== row { return }
-                        if let error = error {
-                            print("Error loading image - \(error)")
-                            return
-                        }
-                        if let image = image {
-                            dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                                imageView.image = image
+            if let row = row as? ItemRow {
+                dispatch_sync(row.itemsLock, { () -> Void in
+                    for item in row.items {
+                        let imageView = UIImageView(frame: CGRectMake(0, 0, 50, 50))
+                        imageView.addConstraint(NSLayoutConstraint(item: imageView, attribute: .Width, relatedBy: .GreaterThanOrEqual, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: self.minimumItemWidth))
+                        imageView.image = self.blankImage
+                        item.image(50, completion: { [weak self, weak imageView] (error, image) -> Void in
+                            guard let s = self, imageView = imageView else { return }
+                            if s.row !== row { return }
+                            if let error = error {
+                                print("Error loading image - \(error)")
+                                return
+                            }
+                            if let image = image {
+                                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                                    imageView.image = image
+                                })
+                            }
                             })
-                        }
-                    })
-
-                    imageViews.append(imageView)
-                }
+                        
+                        self.imageViews.append(imageView)
+                    }
+                })
             }
         }
     }
@@ -916,33 +914,35 @@ class ItemCell : UITableViewCell {
     }
     
     let minimumItemWidth = CGFloat(25)
-    let maximumPercent : CGFloat = 0.4
+    var maximumPercent : CGFloat = 0.4
     var moreWidth : CGFloat = 0
     
     func updateItemStack() {
-        guard let row = row else { return }
-        let itemsStack = self.itemsStack!
-        itemsStack.subviews.forEach { (view) -> () in
-            view.removeFromSuperview()
+        guard let row = row as? ItemRow else { return }
+        dispatch_sync(row.itemsLock) { () -> Void in
+            let itemsStack = self.itemsStack!
+            itemsStack.subviews.forEach { (view) -> () in
+                view.removeFromSuperview()
+            }
+            let showItems = min(Int(floor((self.frame.size.width * self.maximumPercent) / (self.minimumItemWidth + itemsStack.spacing))),self.imageViews.count)
+            for on in 0..<showItems {
+                let imageView = self.imageViews[on]
+                itemsStack.addArrangedSubview(imageView)
+            }
+            let showMore = showItems != self.imageViews.count
+            self.moreWidth = max(self.moreImageConstraint!.constant,self.moreWidth)
+            self.moreImageConstraint!.constant = showMore ? self.moreWidth : 0.0
+            let minStackWidth = CGFloat(showItems) * self.minimumItemWidth + CGFloat(max(0,showItems-1)) * itemsStack.spacing
+            let maxStackWidth = CGFloat(showItems) * 50.0 + CGFloat(max(0,showItems-1)) * itemsStack.spacing
+            let width = min(max(minStackWidth,self.frame.width*self.maximumPercent),maxStackWidth)
+            itemsStack.removeConstraints(itemsStack.constraints)
+            itemsStack.addConstraint(NSLayoutConstraint(item: itemsStack, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: width))
         }
-        let showItems = min(Int(floor((frame.size.width * maximumPercent) / (minimumItemWidth + itemsStack.spacing))),row.items.count)
-        for on in 0..<showItems {
-            let imageView = imageViews[on]
-            itemsStack.addArrangedSubview(imageView)
-        }
-        let showMore = showItems != row.items.count
-        moreWidth = max(moreImageConstraint!.constant,moreWidth)
-        moreImageConstraint!.constant = showMore ? moreWidth : 0.0
-        let minStackWidth = CGFloat(showItems) * minimumItemWidth + CGFloat(max(0,showItems-1)) * itemsStack.spacing
-        let maxStackWidth = CGFloat(showItems) * 50.0 + CGFloat(max(0,showItems-1)) * itemsStack.spacing
-        let width = min(max(minStackWidth,frame.width*maximumPercent),maxStackWidth)
-        itemsStack.removeConstraints(itemsStack.constraints)
-        itemsStack.addConstraint(NSLayoutConstraint(item: itemsStack, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: width))
     }
     
-    func setPlaceImage(url : NSURL) {
-        guard let row = row else { return }
+    func setPlaceImage(url : NSURL?) {
         placeImageView!.image = blankImage
+        guard let row = row as? ItemRow, url = url else { return }
         row.bee.session.dataTaskWithURL(url, completionHandler: { [weak self] (data, _, error) -> Void in
             guard let s = self else { return }
             if s.row !== row { return }
@@ -964,7 +964,7 @@ class MarketCell : ItemCell {
         get { return row as? MarketRow }
     }
     
-    override var row : ItemRow? {
+    override var row : PWRow? {
         didSet {
             cleanup()
             if let row = row as? MarketRow {
@@ -1034,7 +1034,7 @@ class PickupCell : ItemCell, CLLocationManagerDelegate {
         return row as? PickupRow
     }
     
-    override var row : ItemRow? {
+    override var row : PWRow? {
         didSet {
             // Cleanup
             cleanup()

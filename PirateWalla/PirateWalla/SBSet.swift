@@ -33,14 +33,6 @@ class SBSetBase : SBObject {
         return SBSet(dictionary: [ "id" : "\(identifier)", "name" : "Error" ], bee: bee)
     }
     
-    func imageURL(size: Int) -> NSURL? {
-        if let string = data["image_url_\(size)"] as? String {
-            let secureString = string.stringByReplacingOccurrencesOfString("http:", withString: "https:")
-            return NSURL(string: secureString)
-        }
-        return nil
-    }
-    
     var name : String {
         get {
             if id == 25 {

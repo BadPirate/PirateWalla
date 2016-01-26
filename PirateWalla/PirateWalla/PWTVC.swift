@@ -13,9 +13,10 @@ class PWTVC : UITableViewController {
     let progressView  = UILabel(frame: CGRectMake(0,0,200,40))
     var willUpdateSections : Bool = false
     var willUpdateProgress : Bool = false
+    var appeared = false
     let activityLock : dispatch_queue_t
     var activities = [String]()
-    
+
     required init?(coder aDecoder: NSCoder) {
         activityLock = dispatch_queue_create("ActivityLock", nil)
         super.init(coder: aDecoder)
@@ -41,6 +42,37 @@ class PWTVC : UITableViewController {
         updateProgress()
     }
     
+    var subActivityTotal : Int = 0 {
+        didSet {
+            updateProgress()
+        }
+    }
+    
+    var subActivityRemaining : Int = 0 {
+        didSet {
+            updateProgress()
+        }
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        navigationController?.toolbarHidden = true
+        appeared = false
+        super.viewWillDisappear(animated)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        navigationController?.toolbarHidden = progressView.text != nil
+        appeared = true
+        super.viewWillAppear(animated)
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        progressView.textAlignment = .Center
+        progressView.adjustsFontSizeToFitWidth = true
+        toolbarItems = [UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil),UIBarButtonItem(customView: progressView),UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil)]
+    }
+    
     func updateProgress() {
         if !NSThread.isMainThread() {
             if willUpdateProgress { return }
@@ -51,18 +83,22 @@ class PWTVC : UITableViewController {
             return
         }
         willUpdateProgress = false
-        if let progressString = activities.first {
+        if var progressString = activities.first {
+            if subActivityTotal > 0 {
+                progressString += " (\(subActivityTotal+1-subActivityRemaining)/\(subActivityTotal))"
+            }
             if progressView.text != progressString {
+                print(progressString)
                 progressView.text = progressString
             }
-            navigationController!.toolbarHidden = false
+            navigationController?.toolbarHidden = !appeared
         }
         else
         {
             if progressView.text != nil {
                 progressView.text = nil
             }
-            navigationController!.toolbarHidden = true
+            navigationController?.toolbarHidden = true
         }
     }
     
@@ -104,7 +140,7 @@ class PWTVC : UITableViewController {
     override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         let section = sections[section]
         if section.rows.count > 0 {
-            return UITableViewAutomaticDimension
+            return 0
         }
         else
         {
@@ -115,7 +151,7 @@ class PWTVC : UITableViewController {
     override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         let section = sections[section]
         if section.rows.count > 0 {
-            return UITableViewAutomaticDimension
+            return 0
         }
         else
         {

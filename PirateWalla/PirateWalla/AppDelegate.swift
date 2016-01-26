@@ -23,6 +23,8 @@ func delay(delay:Double, closure:()->()) {
         dispatch_get_main_queue(), closure)
 }
 
+let sharedBee = SwiftBee()
+
 @UIApplicationMain
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -39,10 +41,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         handleError(error, button: "Retry", title: "Error", completion: completion)
     }
     
-    class func handleError(error : NSError, button : String, title : String, completion : EmptyCompletion) {
+    class func handleError(error : NSError, button : String, title : String, completion : EmptyCompletion?) {
         if !NSThread.isMainThread() {
             dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                self.handleError(error, completion: completion)
+                if let completion = completion {
+                    self.handleError(error, completion: completion)
+                }
             })
             return
         }
@@ -54,7 +58,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         let alert = UIAlertController(title: title, message: message, preferredStyle: .Alert)
         alert.addAction(UIAlertAction(title: button, style: .Default, handler: { (_action) -> Void in
-            completion()
+            if let completion = completion {
+                completion()
+            }
         }))
         
         if let rootVC = (UIApplication.sharedApplication().delegate as? AppDelegate)?.window?.rootViewController {

@@ -6,8 +6,8 @@
 //  Copyright © 2016 Logic High. All rights reserved.
 //
 
-import Foundation
 import CoreLocation
+import UIKit
 typealias emptyHandler = (cancelled : Bool) -> Void
 
 class SwiftBee {
@@ -16,6 +16,7 @@ class SwiftBee {
     var activeGates = Set<NSDate>()
     var pendingGates = [emptyHandler]()
     let gateLock : dispatch_queue_t
+    var priorityMode = false
     
     init() {
         session = NSURLSession(configuration: NSURLSessionConfiguration.defaultSessionConfiguration())
@@ -54,6 +55,17 @@ class SwiftBee {
                 place = SBPlace(dictionary: data, bee: s)
             }
             completion(error: error, place: place)
+        }
+    }
+    
+    func item(id : Int, completion : (error : NSError?, item : SBItem?) -> Void) {
+        get("/items/\(id)") { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            var item : SBItem? = nil
+            if let data = data {
+                item = SBItem(dictionary: data, bee: s)
+            }
+            completion(error: error, item: item)
         }
     }
     
@@ -234,7 +246,13 @@ class SwiftBee {
                 s.startGate(completion)
                 return
             }
-            s.pendingGates.append(completion)
+            if s.priorityMode {
+                s.pendingGates.insert(completion, atIndex: 0)
+            }
+            else
+            {
+                s.pendingGates.append(completion)
+            }
         }
     }
     
@@ -256,6 +274,32 @@ class SBObject : CustomStringConvertible, Hashable {
     var error : String? {
         get {
             return data["error"] as? String
+        }
+    }
+    
+    func imageURL(size: Int) -> NSURL? {
+        if let string = data["image_url_\(size)"] as? String {
+            return NSURL(string: string)
+        }
+        return nil
+    }
+    
+    
+    func image(size: Int, completion : (error: NSError?, image : UIImage?) -> Void) {
+        let scale = UIScreen.mainScreen().scale
+        let size = Int(CGFloat(size) * scale)
+        if let url = imageURL(size) {
+            bee.session.dataTaskWithURL(url, completionHandler: { (data, _, error) -> Void in
+                var image : UIImage? = nil
+                if let data = data {
+                    image = UIImage(data: data, scale: scale)
+                }
+                completion(error: error, image: image)
+            }).resume()
+        }
+        else
+        {
+            completion(error: nil, image: nil)
         }
     }
     

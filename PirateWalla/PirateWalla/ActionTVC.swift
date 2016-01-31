@@ -70,13 +70,6 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
     func reset() {
         bee.cancelAll()
         clearRows()
-        if let user = user {
-            let userID = defaults.stringForKey(settingUserID)
-            if userID != user.name && userID != "\(user.id)" {
-                self.user = nil
-                login()
-            }
-        }
         nearby = nil
         dispatch_sync(savedItemsLock) { () -> Void in
             self.savedItems = nil
@@ -89,6 +82,16 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
     
     @IBAction func reload() {
         reset()
+        
+        if let user = user, userID = defaults.stringForKey(settingUserID) {
+            if "\(user.id)" != userID && user.name.caseInsensitiveCompare(userID) != .OrderedSame {
+                print("User invalid \(user) != \(userID)")
+                self.user = nil
+                login()
+                return
+            }
+        }
+        
         getNearby()
         getSavedItems()
         getPouch()
@@ -504,12 +507,11 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         print("Logged in - \(user.name) #\(user.id)")
         self.navigationItem.title = user.name
         self.user = user
-        self.getSavedItems()
-        self.getPouch()
+        self.reload()
     }
     
     func getSavedItems() {
-        guard let user = user else { login(); return }
+        guard let user = user else { return }
         let savedActivity = "Getting saved items"
         self.startedActivity(savedActivity)
         user.savedItems { [weak self] (error, savedItems) -> Void in

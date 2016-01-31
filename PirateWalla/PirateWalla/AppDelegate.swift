@@ -44,9 +44,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     class func handleError(error : NSError, button : String, title : String, completion : EmptyCompletion?) {
         if !NSThread.isMainThread() {
             dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                if let completion = completion {
-                    self.handleError(error, completion: completion)
-                }
+                self.handleError(error, button: button, title: title, completion: completion)
             })
             return
         }

@@ -14,9 +14,11 @@ class PWTVC : UITableViewController {
     var willUpdateSections : Bool = false
     var willUpdateProgress : Bool = false
     var appeared = false
+    var animateTableChanges = true
     let activityLock : dispatch_queue_t
     var activities = [String]()
-
+    let updatedSections = NSMutableIndexSet()
+    
     required init?(coder aDecoder: NSCoder) {
         activityLock = dispatch_queue_create("ActivityLock", nil)
         super.init(coder: aDecoder)
@@ -40,6 +42,12 @@ class PWTVC : UITableViewController {
             }
         }
         updateProgress()
+    }
+    
+    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        let row = sections[indexPath.section].rows[indexPath.row]
+        if row.hidden { return 0 }
+        return tableView.rowHeight
     }
     
     var subActivityTotal : Int = 0 {
@@ -99,20 +107,35 @@ class PWTVC : UITableViewController {
                 progressView.text = nil
             }
             navigationController?.toolbarHidden = true
+            didCompleteAllActivities()
         }
     }
     
+    func didCompleteAllActivities() {
+        
+    }
+    
     func updateSections() {
-        tableView.beginUpdates()
+        if animateTableChanges {
+            tableView.beginUpdates()
+        }
         var sectionOn = 0
         for section in sections {
             dispatch_sync(section.pendingRowLock, { () -> Void in
                 while section.pendingRows.count > 0 {
                     let index = NSIndexPath(forRow: section.rows.count, inSection: sectionOn)
-                    self.tableView.insertRowsAtIndexPaths([index], withRowAnimation: .Automatic)
+                    if self.animateTableChanges {
+                        self.tableView.insertRowsAtIndexPaths([index], withRowAnimation: .Automatic)
+                    }
+                    else
+                    {
+                        self.updatedSections.addIndex(sectionOn)
+                    }
                     if section.rows.count == 0 {
                         // First row, show header
-                        self.tableView.reloadSections(NSIndexSet(index: sectionOn), withRowAnimation: .Automatic)
+                        if self.animateTableChanges {
+                            self.tableView.reloadSections(NSIndexSet(index: sectionOn), withRowAnimation: .Automatic)
+                        }
                     }
                     section.rows.append(section.pendingRows.first!)
                     section.pendingRows.removeFirst()
@@ -120,16 +143,29 @@ class PWTVC : UITableViewController {
             })
             sectionOn++
         }
-        tableView.endUpdates()
+        if animateTableChanges {
+            tableView.endUpdates()
+        }
+        if updatedSections.count > 0 {
+            tableView.reloadSections(updatedSections, withRowAnimation: .Automatic)
+            updatedSections.removeAllIndexes()
+        }
     }
     
-    func shouldUpdateSections() {
+    func shouldUpdateSections(animated : Bool) {
+        animateTableChanges = animated
+        shouldUpdateSections()
+    }
+    
+    func shouldUpdateSections()
+    {
         if willUpdateSections { return }
         willUpdateSections = true
         dispatch_async(dispatch_get_main_queue()) { [weak self] () -> Void in
             guard let s = self else { return }
             s.updateSections()
             s.willUpdateSections = false
+            s.animateTableChanges = true
         }
     }
     
@@ -210,6 +246,7 @@ func ==(lhs: PWSection, rhs: PWSection) -> Bool {
 
 class PWRow : NSObject {
     var reuse : String = "basic"
+    var hidden = false
     var setup : (cell : UITableViewCell, table : UITableView) -> Void = { _,_ in }
     var select : (tableView : UITableView, indexPath : NSIndexPath) -> Void = { tableView, indexPath in
         tableView.deselectRowAtIndexPath(indexPath, animated: false)

@@ -27,7 +27,7 @@ class ToolRow : PWRow {
             cell.textLabel!.text = description
             cell.accessoryType = .DisclosureIndicator
         }
-        select = { (tableView : UITableView, indexPath) in
+        select = { [weak self] (tableView : UITableView, indexPath) in
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
             controller.performSegueWithIdentifier(segue, sender: self)
         }

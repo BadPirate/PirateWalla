@@ -18,6 +18,7 @@ class CloudCache {
     let bee : SwiftBee
     let setRefresh = NSTimeInterval(8*60*60) // 8 hours
     let itemTypeRefresh = NSTimeInterval(24*60*60) // 24 hours
+    let issueInspectorRefresh = NSTimeInterval(48*60*60) // 48 Hours
     
     init(bee : SwiftBee) {
         self.bee = bee

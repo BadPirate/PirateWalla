@@ -78,8 +78,15 @@ class IssueInspectorTVC : PWTVC {
             }
             dispatch_async(dispatch_get_main_queue(), { [weak s] () -> Void in
                 guard let s = s else { return }
-                if let record = record {
-                    s.updateRecord(record, number: number)
+                if let record = record, modDate = record.modificationDate {
+                    if -modDate.timeIntervalSinceNow > s.cloud.issueInspectorRefresh {
+                        print("Timed out issue data - \(number)")
+                        s.updateRecordData(record, data: [String:AnyObject](), number: number)
+                    }
+                    else
+                    {
+                        s.updateRecord(record, number: number)
+                    }
                 }
                 else
                 {

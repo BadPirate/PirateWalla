@@ -24,6 +24,15 @@ let settingMixHelper = "MixHelper"
 let settingMaxMarketImprovementPrice = "MaxMarketImprovement"
 let settingMarketImproveSearch = "SearchMarketImprove"
 let settingMarketShowTD = "ShowMarketTD"
+let settingCollectID = "CollectID"
+let settingFavoriteNumber = "HasFavoriteNumber"
+
+let settingTradeMakerThemID = "TradeMakerThemID"
+let settingTradeMakerTheyCollectID = "TradeMakerTheyCollectID"
+let settingTradeMakerTheyHaveFavorite = "TradeMakerTheyHaveFavorite"
+let settingTradeMakerCollectTD = "TradeMakerCollectTD"
+let settingTradeMakerCollectDD = "TradeMakerCollectDD"
+let settingTradeMakerCollectUnique = "TradeMakerCollectUnique"
 
 class SettingsTVC : PWTVC {
     let generalSection : PWSection
@@ -200,7 +209,11 @@ class StringSettingRow : SettingsRow {
         let defaults = NSUserDefaults.standardUserDefaults()
         setup = { [weak self] (cell : UITableViewCell, _) in
             guard let s = self else { return }
-            let value = defaults.stringForKey(defaultKey) ?? defaultValue
+            if defaults.stringForKey(defaultKey) == nil {
+                defaults.setValue(defaultValue, forKey: defaultKey)
+                defaults.synchronize()
+            }
+            let value = defaults.stringForKey(defaultKey)!
             cell.textLabel!.text = "\(description) - \(value)"
             cell.accessoryView = nil
             cell.accessoryType = .DisclosureIndicator

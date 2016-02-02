@@ -238,6 +238,11 @@ class PWSection : Hashable {
             return title.hashValue
         }
     }
+    func addPendingRow(row : PWRow) {
+        dispatch_sync(pendingRowLock) { () -> Void in
+            self.pendingRows.append(row)
+        }
+    }
 }
 
 func ==(lhs: PWSection, rhs: PWSection) -> Bool {

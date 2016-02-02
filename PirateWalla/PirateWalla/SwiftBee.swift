@@ -124,13 +124,57 @@ class SwiftBee {
         }
     }
     
-    func market(completion : (error: NSError?, items : [SBMarketItem]?) -> Void) {
-        fetchMarket([SBMarketItem](), page: 1, completion: completion)
+    func fetchPaged(path : String, completion : (error : NSError?, results : [[String:AnyObject]]?) -> Void) {
+        // Get the first page
+        get(path) { [weak self] (error, data) -> Void in
+            guard let s = self else { return }
+            var results = [[String:AnyObject]]()
+            if let error = error {
+                completion(error: error, results: nil)
+                return
+            }
+            guard let data = data else {
+                completion(error: nil, results: nil)
+                return
+            }
+            results.append(data)
+            var totalPages = 1
+            if let paging = data["paging"] as? [ String : AnyObject ], tp = paging["total_pages"] as? Int {
+                totalPages = tp
+            }
+            if totalPages == 1 {
+                completion(error: nil, results: results)
+                return
+            }
+            var remaining = totalPages-1
+            var failed = false
+            for x in 2...totalPages {
+                s.get(path, parameters: ["page" : "\(x)"], completion: { (error, data) -> Void in
+                    if failed { return }
+                    if let error = error {
+                        failed = true
+                        completion(error: error, results: nil)
+                        return
+                    }
+                    if let data = data {
+                        results.append(data)
+                    }
+                    remaining--
+                    if remaining == 0 {
+                        completion(error: nil, results: results)
+                    }
+                })
+            }
+        }
     }
     
-    func fetchMarket(existing : [SBMarketItem], page : Int, completion : (error: NSError?, items : [SBMarketItem]?) -> Void) {
+    func market(completion : (error: NSError?, items : [SBMarketItem]?) -> Void) {
+        fetchPagedItems("/market", existing: [SBMarketItem](), page: 1, completion: completion)
+    }
+    
+    func fetchPagedItems(path: String, existing : [SBMarketItem], page : Int, completion : (error: NSError?, items : [SBMarketItem]?) -> Void) {
         var existingMutable = existing
-        get("/market", parameters: [ "page" : "\(page)"]) { [weak self] (error, data) -> Void in
+        get(path, parameters: [ "page" : "\(page)"]) { [weak self] (error, data) -> Void in
             guard let s = self else { return }
             if let error = error {
                 completion(error: error, items: nil)
@@ -148,7 +192,7 @@ class SwiftBee {
             if let paging = data["paging"] as? [ String : AnyObject ] {
                 if let totalPages = paging["total_pages"] as? Int {
                     if totalPages > page {
-                        s.fetchMarket(existingMutable, page: page+1, completion: completion)
+                        s.fetchPagedItems(path, existing: existingMutable, page: page+1, completion: completion)
                         return
                     }
                 }

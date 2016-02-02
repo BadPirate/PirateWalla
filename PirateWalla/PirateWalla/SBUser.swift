@@ -30,6 +30,25 @@ class SBUser : SBObject {
         }
     }
     
+    func locked(completion : (error: NSError?, items : [SBItem]?) -> Void) {
+        bee.fetchPaged("/users/\(id)/lockeditems") { [weak self] (error, results) -> Void in
+            guard let s = self else { return }
+            if let error = error {
+                completion(error: error, items: nil)
+                return
+            }
+            var items = [SBItem]()
+            results!.forEach({ (resultDictionary) -> () in
+                if let result = resultDictionary["items"] as? [[String:AnyObject]] {
+                    for itemDictionary in result {
+                        items.append(SBItem(dictionary: itemDictionary, bee: s.bee))
+                    }
+                }
+            })
+            completion(error: nil, items: items)
+        }
+    }
+    
     func uniqueItems(completion : (error : NSError?, uniqueItems : Set<SBItem>?) -> Void) {
         bee.get("/users/\(self.id)/unique") { [weak self] (error, data) -> Void in
             guard let s = self else { return }

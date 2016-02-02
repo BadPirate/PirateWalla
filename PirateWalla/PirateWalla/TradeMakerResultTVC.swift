@@ -35,13 +35,15 @@ class TradeGroup {
     let favoriteNumber : Int
     let collectTD : Bool
     let collectDD : Bool
-    let collectUnique : Bool
+    let showMissing : Bool
+    let showFavoriteTrade : Bool
     
-    init(you : String, favoriteNumber: Int, collectTD : Bool, collectDD : Bool, collectUnique: Bool) {
+    init(you : String, favoriteNumber: Int, collectTD : Bool, collectDD : Bool, showMissing: Bool, showFavoriteTrade: Bool) {
         self.collectTD = collectTD
         self.collectDD = collectDD
         self.favoriteNumber = favoriteNumber
-        self.collectUnique = collectUnique
+        self.showMissing = showMissing
+        self.showFavoriteTrade = showFavoriteTrade
         missingSection = PWSection(title: "\(you) want missing")
         favoriteSection = PWSection(title: "\(you) want favorite #")
         tdSection = PWSection(title: "\(you) want TD")
@@ -123,14 +125,14 @@ class TradeGroup {
                         }
                         
                         // Favorite Improvement?
-                        if collectUnique && item.number != tradeGroup.favoriteNumber && item.number < favoriteNumber && bestNumber > favoriteNumber {
+                        if showFavoriteTrade && item.number != tradeGroup.favoriteNumber && item.number < favoriteNumber && bestNumber > favoriteNumber {
                             let row = TradeRow(fromUser: user, fromType: bestItemType!, fromItem: bestItem!, toUser: tradeGroup.user, toType: resultType, toItem: item)
                             if resultType == .Saved { missingTypeInfo.insert(item.itemTypeID) }
                             if bestItemType == .Saved { missingTypeInfo.insert(bestItem!.itemTypeID) }
                             favoriteTrade.addPendingRow(row)
                         }
                     }
-                    else if collectUnique
+                    else if showMissing
                     {
                         // Missing
                         let row = TradeRow(fromUser: tradeGroup.user!, fromType: resultType, fromItem: item, toUser: nil, toType: nil, toItem: nil)
@@ -158,8 +160,8 @@ class TradeGroup {
 }
 
 class TradeMakerResultTVC: PWTVC {
-    let youGroup = TradeGroup(you: "You", favoriteNumber: defaults.boolForKey(settingFavoriteNumber) ? Int(defaults.stringForKey(settingCollectID) ?? "-1") ?? -1 : -1, collectTD: defaults.boolForKey(settingTradeMakerCollectTD), collectDD: defaults.boolForKey(settingTradeMakerCollectDD), collectUnique: defaults.boolForKey(settingTradeMakerCollectUnique))
-    let themGroup = TradeGroup(you: "They", favoriteNumber: defaults.boolForKey(settingTradeMakerTheyHaveFavorite) ? Int(defaults.stringForKey(settingTradeMakerTheyCollectID) ?? "-1") ?? -1 : -1, collectTD: true, collectDD: true, collectUnique: false)
+    let youGroup = TradeGroup(you: "You", favoriteNumber: defaults.boolForKey(settingFavoriteNumber) ? Int(defaults.stringForKey(settingCollectID) ?? "-1") ?? -1 : -1, collectTD: defaults.boolForKey(settingTradeMakerCollectTD), collectDD: defaults.boolForKey(settingTradeMakerCollectDD), showMissing: defaults.boolForKey(settingTradeMakerShowMissing), showFavoriteTrade: defaults.boolForKey(settingTradeMakerShowFavoriteTrade))
+    let themGroup = TradeGroup(you: "They", favoriteNumber: defaults.boolForKey(settingTradeMakerTheyHaveFavorite) ? Int(defaults.stringForKey(settingTradeMakerTheyCollectID) ?? "-1") ?? -1 : -1, collectTD: defaults.boolForKey(settingTradeMakerTheyCollectTD), collectDD: defaults.boolForKey(settingTradeMakerTheyCollectDD), showMissing: defaults.boolForKey(settingTradeMakerShowTheirMissing), showFavoriteTrade: defaults.boolForKey(settingTradeMakerShowTheirFavoriteTrade))
     
     var cancelled = false, completedLoad = false
     

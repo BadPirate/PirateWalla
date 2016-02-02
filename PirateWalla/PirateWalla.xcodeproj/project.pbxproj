@@ -11,6 +11,8 @@
 		B411231C1C54804A00363B90 /* SettingsTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B411231B1C54804A00363B90 /* SettingsTVC.swift */; };
 		B411231E1C55B76400363B90 /* ToolsTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B411231D1C55B76400363B90 /* ToolsTVC.swift */; };
 		B41123201C55DBD800363B90 /* IssueInspectorTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B411231F1C55DBD800363B90 /* IssueInspectorTVC.swift */; };
+		B4380C8B1C5E7589006A6ECE /* TradeMakerTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4380C8A1C5E7589006A6ECE /* TradeMakerTVC.swift */; };
+		B4380C8D1C5E823B006A6ECE /* TradeMakerResultTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4380C8C1C5E823B006A6ECE /* TradeMakerResultTVC.swift */; };
 		B4EB74621C3CE8B5009885C7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */; };
 		B4EB74691C3CE8B5009885C7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B4EB74671C3CE8B5009885C7 /* Main.storyboard */; };
 		B4EB746B1C3CE8B5009885C7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B4EB746A1C3CE8B5009885C7 /* Assets.xcassets */; };
@@ -31,6 +33,8 @@
 		B411231B1C54804A00363B90 /* SettingsTVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsTVC.swift; sourceTree = "<group>"; };
 		B411231D1C55B76400363B90 /* ToolsTVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToolsTVC.swift; sourceTree = "<group>"; };
 		B411231F1C55DBD800363B90 /* IssueInspectorTVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IssueInspectorTVC.swift; sourceTree = "<group>"; };
+		B4380C8A1C5E7589006A6ECE /* TradeMakerTVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TradeMakerTVC.swift; sourceTree = "<group>"; };
+		B4380C8C1C5E823B006A6ECE /* TradeMakerResultTVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TradeMakerResultTVC.swift; sourceTree = "<group>"; };
 		B4EB745E1C3CE8B5009885C7 /* PirateWalla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PirateWalla.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4EB74611C3CE8B5009885C7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B4EB74681C3CE8B5009885C7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -71,6 +75,8 @@
 				B411231B1C54804A00363B90 /* SettingsTVC.swift */,
 				B411231D1C55B76400363B90 /* ToolsTVC.swift */,
 				B411231F1C55DBD800363B90 /* IssueInspectorTVC.swift */,
+				B4380C8A1C5E7589006A6ECE /* TradeMakerTVC.swift */,
+				B4380C8C1C5E823B006A6ECE /* TradeMakerResultTVC.swift */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -203,6 +209,8 @@
 				B4F382231C44248600274826 /* SBSet.swift in Sources */,
 				B411231E1C55B76400363B90 /* ToolsTVC.swift in Sources */,
 				B4F382281C455CAF00274826 /* CloudCache.swift in Sources */,
+				B4380C8D1C5E823B006A6ECE /* TradeMakerResultTVC.swift in Sources */,
+				B4380C8B1C5E7589006A6ECE /* TradeMakerTVC.swift in Sources */,
 				B4EB747B1C3D6530009885C7 /* ActionTVC.swift in Sources */,
 				B411231C1C54804A00363B90 /* SettingsTVC.swift in Sources */,
 				B4EB747D1C3D6890009885C7 /* SBPlace.swift in Sources */,

@@ -195,6 +195,7 @@ class IssueInspectorTVC : PWTVC {
             guard let s = self else { return }
             if let error = error {
                 AppDelegate.handleError(error, button: "OK", title: "Error", completion: nil)
+                s.stoppedActivity(activity)
                 return
             }
             if let saved = detail?["items"] as? [ Int ] {

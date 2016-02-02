@@ -53,14 +53,6 @@ class SBMarketItem : SBItemBase {
         }
     }
     
-    func enhanceWithItemType(itemType : SBItemType) -> SBEnhancedMarketItem {
-        var enhancedData = itemType.data
-        for (key, value) in data {
-            enhancedData[key] = value
-        }
-        return SBEnhancedMarketItem(dictionary: enhancedData, bee: bee)
-    }
-    
     override var shortDescription : String {
         get {
             return "\(self.dynamicType) - type \(itemTypeID)"
@@ -145,5 +137,13 @@ class SBItemBase : SBObject {
             }
             return itemID
         }
+    }
+    
+    func enhanceWithItemType(itemType : SBItemType) -> SBEnhancedMarketItem {
+        var enhancedData = itemType.data
+        for (key, value) in data {
+            enhancedData[key] = value
+        }
+        return SBEnhancedMarketItem(dictionary: enhancedData, bee: bee)
     }
 }

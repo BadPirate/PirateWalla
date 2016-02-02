@@ -14,7 +14,8 @@ class ToolsTVC : PWTVC {
         super.init(coder: aDecoder)
         // Main Section
         let numberInspector = ToolRow(description: "Issue Number Inspector", segue: "NumberInspector", controller: self)
-        mainSection.rows = [numberInspector]
+        let tradeMaker = ToolRow(description: "Trade Maker", segue: "TradeMaker", controller: self)
+        mainSection.rows = [numberInspector,tradeMaker]
         sections = [mainSection]
     }
 }

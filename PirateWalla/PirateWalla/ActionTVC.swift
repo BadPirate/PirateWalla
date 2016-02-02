@@ -53,7 +53,7 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         pouchSection = ActionSection(title: "Pouch", rowDescriptor: "Pouch")
         let bee = sharedBee
         self.bee = bee
-        self.cloudCache = CloudCache(bee: bee)
+        self.cloudCache = sharedCloud
         savedItemsLock = dispatch_queue_create("SavedItemsLock", nil)
         super.init(coder: aDecoder)
         sections = [missingSection,pouchSection,significantImprovement,mixPickupSection,improveSection,sdSection,ddSection,tdSection,onexxSection]

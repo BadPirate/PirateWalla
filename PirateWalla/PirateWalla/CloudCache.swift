@@ -9,6 +9,8 @@
 import Foundation
 import CloudKit
 
+let sharedCloud = CloudCache(bee: sharedBee)
+
 class CloudCache {
     let publicDatabase = CKContainer.defaultContainer().publicCloudDatabase
     var setsCache = [ Int : SBSet ]()
@@ -18,13 +20,13 @@ class CloudCache {
     let bee : SwiftBee
     let setRefresh = NSTimeInterval(8*60*60) // 8 hours
     let itemTypeRefresh = NSTimeInterval(24*60*60) // 24 hours
-    let issueInspectorRefresh = NSTimeInterval(48*60*60) // 48 Hours
+    let issueInspectorRefresh = NSTimeInterval(24*60*60) // 24 Hours
     
     init(bee : SwiftBee) {
         self.bee = bee
     }
     
-    func enhance(baseItems : Set<SBMarketItem>, completion : (error : NSError?, Set<SBItem>?) -> Void)
+    func enhance(baseItems : Set<SBItemBase>, completion : (error : NSError?, Set<SBItem>?) -> Void)
     {
         var missingItemTypes = Set<Int>()
         
@@ -60,6 +62,20 @@ class CloudCache {
                 return
             }
             completion(error: error, nil)
+        }
+    }
+    
+    func itemTypesWithIdentifiers(identifiers : Set<Int>, completion : (error : NSError?, itemTypes : Set<SBItemType>?) -> Void) {
+        objectsWithIdentifiers(identifiers, recordType: itemTypeRecordType, cache: itemTypeCache) { [weak self] (error, objects, updateCache) -> Void in
+            guard let s = self else { return }
+            if let cache = updateCache as? [Int : SBItemType] {
+                s.itemTypeCache = cache
+            }
+            if let objects = objects as? Set<SBItemType> {
+                completion(error: nil, itemTypes: objects)
+                return
+            }
+            completion(error: error, itemTypes: nil)
         }
     }
     

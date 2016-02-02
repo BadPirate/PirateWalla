@@ -32,7 +32,12 @@ let settingTradeMakerTheyCollectID = "TradeMakerTheyCollectID"
 let settingTradeMakerTheyHaveFavorite = "TradeMakerTheyHaveFavorite"
 let settingTradeMakerCollectTD = "TradeMakerCollectTD"
 let settingTradeMakerCollectDD = "TradeMakerCollectDD"
-let settingTradeMakerCollectUnique = "TradeMakerCollectUnique"
+let settingTradeMakerTheyCollectTD = "TheyCollectTD"
+let settingTradeMakerTheyCollectDD = "TheyCollectDD"
+let settingTradeMakerShowMissing = "ShowMissing"
+let settingTradeMakerShowTheirMissing = "ShowTheirMissing"
+let settingTradeMakerShowFavoriteTrade = "ShowFavoriteTrade"
+let settingTradeMakerShowTheirFavoriteTrade = "ShowTheirFavoriteTrade"
 
 class SettingsTVC : PWTVC {
     let generalSection : PWSection

@@ -20,17 +20,24 @@ class TradeMakerTVC: PWTVC {
         let youCollect = StringSettingRow(description: "Favorite Number", defaultKey: settingCollectID, defaultValue: "1")
         youCollect.keyboardType = .NumberPad
         youCollect.dependentOn.insert(settingFavoriteNumber)
+        let youShowFavoriteTrade = ToggleSettingRow(description: "Show favorite trade", defaultKey: settingTradeMakerShowFavoriteTrade, defaultState: false)
+        youShowFavoriteTrade.dependentOn.insert(settingFavoriteNumber)
         let youCollectTD = ToggleSettingRow(description: "Collecting TD", defaultKey: settingTradeMakerCollectTD, defaultState: true)
         let youCollectDD = ToggleSettingRow(description: "Collecting DD", defaultKey: settingTradeMakerCollectDD, defaultState: true)
-        let youCollectUnique = ToggleSettingRow(description: "Collecting Unique", defaultKey: settingTradeMakerCollectUnique, defaultState: true)
-        youSection.rows = [youUser,youHaveFavoriteNumber,youCollect,youCollectTD,youCollectDD,youCollectUnique]
+        let youShowMissing = ToggleSettingRow(description: "Show Missing", defaultKey: settingTradeMakerShowMissing, defaultState: true)
+        youSection.rows = [youUser,youHaveFavoriteNumber,youShowFavoriteTrade,youCollect,youCollectTD,youCollectDD,youShowMissing]
         
         let themUser = StringSettingRow(description: "User ID", defaultKey: settingTradeMakerThemID, defaultValue: "")
         let themHaveFavorite = ToggleSettingRow(description: "Favorite Number", defaultKey: settingTradeMakerTheyHaveFavorite, defaultState: false)
         let themCollect = StringSettingRow(description: "Favorite Number", defaultKey: settingTradeMakerTheyCollectID, defaultValue: "1")
+        let themShowFavoriteTrade = ToggleSettingRow(description: "Show favorite trade", defaultKey: settingTradeMakerShowTheirFavoriteTrade, defaultState: false)
+        themShowFavoriteTrade.dependentOn.insert(settingFavoriteNumber)
+        let themCollectTD = ToggleSettingRow(description: "Collecting TD", defaultKey: settingTradeMakerTheyCollectTD, defaultState: true)
+        let themCollectDD = ToggleSettingRow(description: "Collecting DD", defaultKey: settingTradeMakerTheyCollectDD, defaultState: true)
+        let themShowMissing = ToggleSettingRow(description: "Show Missing", defaultKey: settingTradeMakerShowTheirMissing, defaultState: true)
         themCollect.keyboardType = .NumberPad
         themCollect.dependentOn.insert(settingTradeMakerTheyHaveFavorite)
-        themSection.rows = [themUser,themHaveFavorite,themCollect]
+        themSection.rows = [themUser,themHaveFavorite,themShowFavoriteTrade,themCollect,themCollectDD,themCollectTD,themShowMissing]
         
         sections = [youSection,themSection]
     }

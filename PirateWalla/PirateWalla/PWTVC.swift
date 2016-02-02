@@ -174,20 +174,21 @@ class PWTVC : UITableViewController {
     }
     
     override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        let section = sections[section]
-        if section.rows.count > 0 {
-            return 0
+        let sectionObject = sections[section]
+        let firstRowSpace : CGFloat = section == 0 ? 8 : 0
+        if sectionObject.rows.count > 0 {
+            return 20 + firstRowSpace
         }
         else
         {
-            return 1
+            return 1 + firstRowSpace
         }
     }
     
     override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        let section = sections[section]
-        if section.rows.count > 0 {
-            return 0
+        let sectionObject = sections[section]
+        if sectionObject.rows.count > 0 {
+            return 8
         }
         else
         {
@@ -196,9 +197,9 @@ class PWTVC : UITableViewController {
     }
     
     override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let section = sections[section]
-        if section.rows.count > 0 {
-            return section.title
+        let sectionObject = sections[section]
+        if sectionObject.rows.count > 0 {
+            return sectionObject.title
         }
         else
         {
@@ -224,18 +225,18 @@ class PWTVC : UITableViewController {
 }
 
 class PWSection : Hashable {
-    let title : String
+    let title : String?
     let pendingRowLock : dispatch_queue_t
     
     var rows : [ PWRow ] = [PWRow]()
     var pendingRows : [ PWRow ] = [PWRow]()
-    init(title : String) {
+    init(title : String?) {
         self.title = title
         self.pendingRowLock = dispatch_queue_create("PWTVC.\(title)", nil)
     }
     var hashValue: Int {
         get {
-            return title.hashValue
+            return title?.hashValue ?? 0
         }
     }
     func addPendingRow(row : PWRow) {

@@ -9,7 +9,7 @@
 import UIKit
 
 class ToolsTVC : PWTVC {
-    let mainSection = PWSection(title: "Tools")
+    let mainSection = PWSection(title: nil)
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         // Main Section

@@ -31,7 +31,7 @@ class TradeMakerTVC: PWTVC {
         let themHaveFavorite = ToggleSettingRow(description: "Favorite Number", defaultKey: settingTradeMakerTheyHaveFavorite, defaultState: false)
         let themCollect = StringSettingRow(description: "Favorite Number", defaultKey: settingTradeMakerTheyCollectID, defaultValue: "1")
         let themShowFavoriteTrade = ToggleSettingRow(description: "Show favorite trade", defaultKey: settingTradeMakerShowTheirFavoriteTrade, defaultState: false)
-        themShowFavoriteTrade.dependentOn.insert(settingFavoriteNumber)
+        themShowFavoriteTrade.dependentOn.insert(settingTradeMakerTheyHaveFavorite)
         let themCollectTD = ToggleSettingRow(description: "Collecting TD", defaultKey: settingTradeMakerTheyCollectTD, defaultState: true)
         let themCollectDD = ToggleSettingRow(description: "Collecting DD", defaultKey: settingTradeMakerTheyCollectDD, defaultState: true)
         let themShowMissing = ToggleSettingRow(description: "Show Missing", defaultKey: settingTradeMakerShowTheirMissing, defaultState: true)

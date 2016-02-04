@@ -277,26 +277,14 @@ class TradeMakerResultTVC: PWTVC {
                     }
                     s.stoppedActivity(savedItemsActivity)
                 })
-//                let uniqueItemsActivity = "Getting \(your) unique items"
-//                s.startedActivity(uniqueItemsActivity)
-//                user.uniqueItems({ [weak s] (error, uniqueItems) -> Void in
-//                    guard let s = s else { return }
-//                    s.stoppedActivity(uniqueItemsActivity)
-//                    if let error = error {
-//                        s.errored(error)
-//                        return
-//                    }
-//                    if let items = uniqueItems {
-//                        tradeGroup.foundItems(.Unique, items: items)
-//                    }
-//                })
                 let lockedItemsActivity = "Getting \(your) locked items"
                 s.startedActivity(lockedItemsActivity)
                 user.locked({ [weak s] (error, items) -> Void in
                     guard let s = s else { return }
                     s.stoppedActivity(lockedItemsActivity)
                     if let error = error {
-                        s.errored(error)
+                        // Ignore locked items error
+                        print("Locked items error - \(error.code), \(error)")
                         return
                     }
                     if let items = items {
@@ -337,7 +325,13 @@ class TradeRow : PWRow {
         }
         select = { (tableView : UITableView, indexPath) in
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
-            UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://items/\(fromItem.id)")!)
+            var itemID = fromItem.id
+            if let toUser = toUser, userID = defaults.stringForKey(settingUserID), toItem = toItem {
+                if toUser.name == userID || toUser.id == Int(userID) {
+                    itemID = toItem.id
+                }
+            }
+            UIApplication.sharedApplication().openURL(NSURL(string: "wallabee://items/\(itemID)")!)
         }
         reuse = "trade"
     }

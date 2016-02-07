@@ -37,12 +37,16 @@ class MapVC : PWVC, MKMapViewDelegate {
     @IBAction func reset() {
         searchButton!.enabled = false
         resetButton!.enabled = false
+        recheck = true
         dispatch_sync(self.itemLock, { () -> Void in
             self.savedItems.removeAll()
             self.pouchItems.removeAll()
             self.mixReverseLookup.removeAll()
         })
+        let activity = "Resetting"
+        startedActivity(activity)
         ActionTVC.login(self) { (user) -> Void in
+            defer { self.stoppedActivity(activity) }
             self.user = user
             ActionTVC.getSavedItems(user, watcher: self, completion: { (error, savedItems) -> Void in
                 if let error = error {
@@ -87,6 +91,7 @@ class MapVC : PWVC, MKMapViewDelegate {
             let annotations = mapView.annotations
             mapView.removeAnnotations(annotations)
             mapView.addAnnotations(annotations)
+            recheck = false
         }
     }
     

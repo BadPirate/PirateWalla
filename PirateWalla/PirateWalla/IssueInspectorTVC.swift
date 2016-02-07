@@ -199,17 +199,10 @@ class IssueInspectorTVC : PWTVC {
                 return
             }
             if let saved = detail?["items"] as? [ Int ] {
-                dispatch_sync(s.activityLock, { () -> Void in
-                    s.subActivityTotal = saved.count
-                    s.subActivityRemaining = saved.count
-                })
+                s.startedSubActivities(saved.count)
                 s.parseSaved(saved, completion: { [weak s] (error) -> Void in
                     guard let s = s else { return }
                     s.stoppedActivity(activity)
-                    dispatch_sync(s.activityLock, { () -> Void in
-                        s.subActivityRemaining = 0
-                        s.subActivityTotal = 0
-                    })
                     if let error = error {
                         AppDelegate.handleError(error, button: "OK", title: "Error", completion: nil)
                         s.cancelled = true
@@ -245,10 +238,7 @@ class IssueInspectorTVC : PWTVC {
             bee.item(itemID, completion: { [weak self] (error, item) -> Void in
                 guard let s = self else { return }
                 if s.cancelled { return }
-                dispatch_sync(s.activityLock, { [weak s] () -> Void in
-                    guard let s = s else { return }
-                    s.subActivityRemaining--
-                })
+                s.stoppedSubActivity()
                 if let error = error {
                     completion(error: error)
                     return
@@ -261,7 +251,7 @@ class IssueInspectorTVC : PWTVC {
                 })
                 var complete = false
                 dispatch_sync(s.activityLock, { () -> Void in
-                    complete = s.subActivityRemaining == 0
+                    complete = (s.subActivityRemaining == 0 || (s.subActivityRemaining == 1 && s.activities.count == 2))
                 })
                 if complete {
                     completion(error: nil)
@@ -420,19 +410,14 @@ class IIUserRow : ItemRow {
             let activity = "Getting User Info"
             if let inspector = inspector {
                 inspector.startedActivity(activity)
-                dispatch_sync(inspector.activityLock, { () -> Void in
-                    inspector.subActivityTotal++
-                    inspector.subActivityRemaining++
-                })
+                inspector.startedSubActivities(1)
             }
             bee.priorityMode = true
             bee.user("\(userID)") { [weak self] (error, user) -> Void in
                 guard let s = self else { return }
                 if let inspector = s.inspector {
                     inspector.stoppedActivity(activity)
-                    dispatch_sync(inspector.activityLock, { () -> Void in
-                        inspector.subActivityRemaining--
-                    })
+                    inspector.stoppedSubActivity()
                     if let user = user {
                         inspector.userAdded = true
                         inspector.users[user.id] = user

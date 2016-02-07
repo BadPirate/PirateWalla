@@ -10,8 +10,37 @@ import Foundation
 import UIKit
 import CoreLocation
 
+typealias PlaceObjects = [ FoundItemType : [ SBPlace : Set<SBItemBase> ] ]
+
+let marketPlaceID = -100
 let helicarrierID = 1728050
 let defaults = NSUserDefaults.standardUserDefaults()
+
+enum FoundItemType : Int {
+    case Missing = 1, SignificantImprovement, Mix, SD, DD, Improvement, TD, OneXXX
+    var name : String {
+        get {
+            switch self {
+            case .Missing:
+                return "missing"
+            case .Improvement:
+                return "improvement"
+            case .SignificantImprovement:
+                return "significant"
+            case .SD:
+                return "SD"
+            case .DD:
+                return "DD"
+            case .TD:
+                return "TD"
+            case .OneXXX:
+                return "onexxx"
+            case .Mix:
+                return "mix"
+            }
+        }
+    }
+}
 
 class ActionTVC : PWTVC, CLLocationManagerDelegate {
     let bee : SwiftBee
@@ -59,6 +88,13 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         sections = [missingSection,pouchSection,significantImprovement,mixPickupSection,improveSection,sdSection,ddSection,tdSection,onexxSection]
     }
     
+    func login() {
+        ActionTVC.login(self) { (user) -> Void in
+            self.user = user
+            self.didLogin(user)
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationItem.title = "Log in"
@@ -73,7 +109,6 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         nearby = nil
         dispatch_sync(savedItemsLock) { () -> Void in
             self.savedItems = nil
-            self.mixRequiredItems = nil
             self.mixReverseLookup = nil
             self.pouchItemTypes = nil
         }
@@ -93,35 +128,40 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         }
         
         getNearby()
-        getSavedItems()
+        if let user = user {
+            ActionTVC.getSavedItems(user, watcher: self, completion: { [weak self] (error, savedItems) -> Void in
+                guard let s = self else { return }
+                dispatch_sync(s.savedItemsLock, { [weak s] () -> Void in
+                    guard let s = s else { return }
+                    s.savedItems = savedItems
+                })
+                s.addUniqueItems()
+            })
+        }
+
         getPouch()
     }
     
-    func logout() {
+    class func logout() {
         defaults.removeObjectForKey(settingUserID)
         defaults.synchronize()
-        user = nil
-        navigationItem.title = "Logged Out"
-        reset()
     }
     
-    func login() {
+    class func login(watcher : ActivityWatcher, completion : (user : SBUser) -> Void) {
         if let id = defaults.stringForKey(settingUserID)
         {
             let loginActivity = "Logging in"
-            startedActivity(loginActivity)
-            bee.user(id) { [weak self] (error, user) -> Void in
-                guard let s = self else { return }
-                s.stoppedActivity(loginActivity)
+            watcher.startedActivity(loginActivity)
+            sharedBee.user(id) { (error, user) -> Void in
+                watcher.stoppedActivity(loginActivity)
                 if let error = error {
                     AppDelegate.handleError(error, button: "Retry", title: "Error logging in", completion: { () -> Void in
-                        s.logout()
-                        s.login()
+                        ActionTVC.logout()
+                        ActionTVC.login(watcher, completion: completion)
                         })
                     return
                 }
-                let user = user!
-                s.didLogin(user)
+                completion(user: user!)
             }
             return
         }
@@ -133,9 +173,9 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: { (action) -> Void in
             defaults.setObject(alert.textFields![0].text, forKey: settingUserID)
             defaults.synchronize()
-            self.login()
+            ActionTVC.login(watcher, completion: completion)
         }))
-        presentViewController(alert, animated: true, completion: nil)
+        AppDelegate.presentAlert(alert)
     }
     
     func locationRequired() {
@@ -204,26 +244,20 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         }
     }
     
-    let marketPlaceID = -100
-    typealias placeObjects = [ ActionSection : [ SBPlace : Set<SBItemBase> ] ]
     
-    func appendPlaceObject(inout placeObject : placeObjects, section : ActionSection, atPlace : SBPlace?, item : SBItemBase) {
+    class func appendPlaceObject(inout placeObject : PlaceObjects, type : FoundItemType, atPlace : SBPlace?, item : SBItemBase) {
         let place = (atPlace != nil) ? atPlace! : SBPlace(dictionary: [ "id" : "\(marketPlaceID)" ], bee: item.bee)
         
-        if placeObject[section] == nil {
-            placeObject[section] = [ SBPlace : Set<SBItemBase> ]()
+        if placeObject[type] == nil {
+            placeObject[type] = [ SBPlace : Set<SBItemBase> ]()
         }
-        if placeObject[section]![place] == nil {
-            placeObject[section]![place] = Set<SBItemBase>()
+        if placeObject[type]![place] == nil {
+            placeObject[type]![place] = Set<SBItemBase>()
         }
-        placeObject[section]![place]!.insert(item)
+        placeObject[type]![place]!.insert(item)
     }
     
-    func parseItems(items: [SBItemBase], place : SBPlace?)
-    {
-        guard let savedItems = savedItems, pouchItemTypes = pouchItemTypes else { return }
-        var placeObjectsFound = placeObjects()
-        
+    class func placeObjects(items: [SBItemBase], place : SBPlace?, savedItems : [ Int : SBSavedItem ], pouchItemTypes : [ Int : SBSavedItem ], mixReverseLookup : [ Int : SBItemType ]?, inout placeObjects : PlaceObjects) {
         let minImprovement = defaults.integerForKey(settingMinimumImprovement)
         for item in items {
             if item.locked { continue }
@@ -231,7 +265,7 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
             // Missing?
             if savedItems[item.itemTypeID] == nil && pouchItemTypes[item.itemTypeID] == nil {
                 print("Missing - \(item.name)")
-                appendPlaceObject(&placeObjectsFound, section: missingSection, atPlace: place, item: item)
+                appendPlaceObject(&placeObjects, type: .Missing, atPlace: place, item: item)
                 continue
             }
             
@@ -248,11 +282,11 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
                     if let savedItem = savedItems[item.itemTypeID] {
                         if item.numberClass.rawValue < savedItem.numberClass.rawValue {
                             print("Significant improvement - \(item.name)")
-                            appendPlaceObject(&placeObjectsFound, section: significantImprovement, atPlace: place, item: item)
+                            appendPlaceObject(&placeObjects, type: .SignificantImprovement, atPlace: place, item: item)
                         }
                         else if !defaults.boolForKey(settingSignificantImprovement) && item.number + minImprovement < savedItem.number {
                             print("Improved - \(item.name)")
-                            appendPlaceObject(&placeObjectsFound, section: improveSection, atPlace: place, item: item)
+                            appendPlaceObject(&placeObjects, type: .Improvement, atPlace: place, item: item)
                             continue
                         }
                     }
@@ -263,28 +297,28 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
                 // SD?
                 if item.numberClass == .SD && defaults.boolForKey(settingSDSearch) {
                     print("Single Digit! - \(item.name)")
-                    appendPlaceObject(&placeObjectsFound, section: sdSection, atPlace: place, item: item)
+                    appendPlaceObject(&placeObjects, type: .SD, atPlace: place, item: item)
                     continue
                 }
                 
                 // DD?
                 if item.numberClass == .DD && defaults.boolForKey(settingDDSearch) {
                     print("DD - \(item.name)")
-                    appendPlaceObject(&placeObjectsFound, section: ddSection, atPlace: place, item: item)
+                    appendPlaceObject(&placeObjects, type: .DD, atPlace: place, item: item)
                     continue
                 }
                 
                 // TD?
                 if item.numberClass == .TD && defaults.boolForKey(settingTDSearch) {
                     print("TD - \(item.name)")
-                    appendPlaceObject(&placeObjectsFound, section: tdSection, atPlace: place, item: item)
+                    appendPlaceObject(&placeObjects, type: .TD, atPlace: place, item: item)
                     continue
                 }
                 
                 // 1xxx
                 if item.numberClass == .OneXXX && defaults.boolForKey(setting1xxxSearch) {
                     print("1xxx - \(item.name)")
-                    appendPlaceObject(&placeObjectsFound, section: onexxSection, atPlace: place, item: item)
+                    appendPlaceObject(&placeObjects, type: .OneXXX, atPlace: place, item: item)
                     continue
                 }
             }
@@ -293,13 +327,40 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
             if let mixReverseLookup = mixReverseLookup {
                 if defaults.boolForKey(settingMixHelper) && mixReverseLookup[item.itemTypeID] != nil && pouchItemTypes[item.itemTypeID] == nil {
                     print("Found item needed for mix - \(item.name)")
-                    appendPlaceObject(&placeObjectsFound, section: mixPickupSection, atPlace: place, item: item)
+                    appendPlaceObject(&placeObjects, type: .Mix, atPlace: place, item: item)
                     continue
                 }
             }
         }
+    }
+    
+    func parseItems(items: [SBItemBase], place : SBPlace?)
+    {
+        guard let savedItems = savedItems, pouchItemTypes = pouchItemTypes else { return }
+        var placeObjectsFound = PlaceObjects()
         
-        for (actionSection, placeObjects) in placeObjectsFound {
+        ActionTVC.placeObjects(items, place: place, savedItems: savedItems, pouchItemTypes: pouchItemTypes, mixReverseLookup: mixReverseLookup, placeObjects: &placeObjectsFound)
+        
+        for (type, placeObjects) in placeObjectsFound {
+            var actionSection : ActionSection = missingSection
+            switch type {
+            case .Missing:
+                actionSection = missingSection
+            case .Improvement:
+                actionSection = improveSection
+            case .SignificantImprovement:
+                actionSection = significantImprovement
+            case .SD:
+                actionSection = sdSection
+            case .DD:
+                actionSection = ddSection
+            case .TD:
+                actionSection = tdSection
+            case .OneXXX:
+                actionSection = onexxSection
+            case .Mix:
+                actionSection = mixPickupSection
+            }
             for (place, items) in placeObjects {
                 if place.id == marketPlaceID {
                     // Market
@@ -403,7 +464,7 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         guard let nearby = nearby else { print("Waiting for nearby (\(self.nearby)) information before refresh"); return }
         guard let savedItems = savedItems else { print("Waiting for savedItems (\(self.savedItems)) information before refresh"); return }
         if defaults.boolForKey(settingMixHelper) {
-            guard let _ = mixReverseLookup, _ = mixRequiredItems else { print("Waiting for Mix / saved items"); return }
+            guard let _ = mixReverseLookup else { print("Waiting for Mix / saved items"); return }
         }
         guard let pouchItemTypes = pouchItemTypes else { print("Waiting for pouch"); return }
         
@@ -510,46 +571,45 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
         self.reload()
     }
     
-    func getSavedItems() {
-        guard let user = user else { return }
+    class func getSavedItems(user : SBUser, watcher : ActivityWatcher, completion : (error : NSError?, savedItems : [ Int : SBSavedItem ]?) -> Void) {
         let savedActivity = "Getting saved items"
-        self.startedActivity(savedActivity)
-        user.savedItems { [weak self] (error, savedItems) -> Void in
-            self?.stoppedActivity(savedActivity)
-            guard let s = self else { return }
+        watcher.startedActivity(savedActivity)
+        user.savedItems { (error, savedItems) -> Void in
+            defer { watcher.stoppedActivity(savedActivity) }
             if let error = error {
-                AppDelegate.handleError(error, completion: { () -> Void in
-                    s.login()
-                })
+                completion(error: error, savedItems: nil)
                 return
             }
-            dispatch_sync(s.savedItemsLock, { () -> Void in
-                s.savedItems = [ Int : SBSavedItem ]()
-                if let savedItems = savedItems {
-                    for savedItem in savedItems {
-                        s.savedItems![savedItem.itemTypeID] = savedItem
-                    }
-                }
-            })
-            s.addUniqueItems()
+            var savedItemResult = [ Int : SBSavedItem ]()
+            for savedItem in savedItems! {
+                savedItemResult[savedItem.itemTypeID] = savedItem
+            }
+            completion(error: nil, savedItems: savedItemResult)
         }
     }
     
     func getPouch() {
         guard let user = user else { login(); return }
-        let activity = "Getting Pouch Items"
-        startedActivity(activity)
-        user.pouch { [weak self ] (error, items) -> Void in
-            guard let s = self else { return }
-            s.stoppedActivity(activity)
-            let items = items!
-            dispatch_sync(s.savedItemsLock, { () -> Void in
-                s.pouchItemTypes = [ Int : SBItem ]()
-                for item in items {
-                    s.pouchItemTypes![item.itemTypeID] = item
-                }
+        ActionTVC.getPouch(user, watcher: self) { (error, pouchItems) -> Void in
+            dispatch_sync(self.savedItemsLock, { () -> Void in
+                self.pouchItemTypes = pouchItems
             })
-            s.refreshList()
+            self.refreshList()
+        }
+    }
+    
+    class func getPouch(user : SBUser, watcher : ActivityWatcher, completion : (error : NSError?, pouchItems : [ Int : SBSavedItem ]?) -> Void) {
+        let activity = "Getting Pouch Items"
+        watcher.startedActivity(activity)
+        user.pouch { (error, items) -> Void in
+            watcher.stoppedActivity(activity)
+            var pouchItemTypes = [ Int : SBSavedItem ]()
+            if let items = items {
+                for item in items {
+                    pouchItemTypes[item.itemTypeID] = item
+                }
+            }
+            completion(error: error, pouchItems: pouchItemTypes)
         }
     }
     
@@ -579,20 +639,29 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
     }
     
     func addMixRequirements() {
+        guard let savedItems = savedItems else { return }
+        ActionTVC.addMixRequirements(self, savedItems: savedItems, itemLock: savedItemsLock) { (error, mixReverseLookup) -> Void in
+            if let error = error {
+                AppDelegate.handleError(error, button: "OK", title: "Mix Error", completion: nil)
+                self.refreshList()
+                return
+            }
+            self.mixReverseLookup = mixReverseLookup
+            self.refreshList()
+        }
+    }
+    
+    class func addMixRequirements(watcher : ActivityWatcher, savedItems : [ Int : SBSavedItem ], itemLock : dispatch_queue_t, completion : (error : NSError?, mixReverseLookup : [ Int : SBItemType ]?) -> Void) {
         if !defaults.boolForKey(settingMixHelper) {
-            refreshList()
+            completion(error: nil, mixReverseLookup: [ Int : SBItemType ]())
             return
         }
         let activity = "Updating Set List"
-        startedActivity(activity)
-        bee.setList { [weak self] (error, sets) -> Void in
-            guard let s = self else { return }
-            s.stoppedActivity(activity)
+        watcher.startedActivity(activity)
+        sharedBee.setList { (error, sets) -> Void in
+            defer { watcher.stoppedActivity(activity) }
             if let error = error {
-                AppDelegate.handleError(error, button: "Okay", title: "Mix error", completion: { () -> Void in
-                    s.mixRequiredItems = Mixes()
-                    s.refreshList()
-                })
+                completion(error: error, mixReverseLookup: nil)
                 return
             }
             let sets = sets!
@@ -601,35 +670,30 @@ class ActionTVC : PWTVC, CLLocationManagerDelegate {
                 setIdentifiers.insert(set.setID)
             }
             let activity = "Calculating mixes"
-            s.startedActivity(activity)
-            s.cloudCache.sets(setIdentifiers, completion: { [weak s] (error, sets) -> Void in
-                guard let s = s else { return }
-                s.stoppedActivity(activity)
+            watcher.startedActivity(activity)
+            sharedCloud.sets(setIdentifiers, completion: { (error, sets) -> Void in
+                defer { watcher.stoppedActivity(activity) }
                 if let error = error {
-                    AppDelegate.handleError(error, button: "Okay", title: "Mix error", completion: { () -> Void in
-                        s.mixRequiredItems = Mixes()
-                        s.refreshList()
-                    })
+                    completion(error: error, mixReverseLookup: nil)
                     return
                 }
                 let sets = sets!
-                dispatch_sync(s.savedItemsLock, { () -> Void in
-                    guard let savedItems = s.savedItems else { return }
-                    s.mixRequiredItems = Mixes()
-                    s.mixReverseLookup = [ Int : SBItemType ]()
+                var mixRequiredItems = Mixes()
+                var mixReverseLookup = [ Int : SBItemType ]()
+                dispatch_sync(itemLock, { () -> Void in
                     for set in sets {
                         for itemType in set.itemTypes {
                             if savedItems[itemType.id] == nil {
                                 let mix = itemType.mix
-                                s.mixRequiredItems![itemType.id] = mix
+                                mixRequiredItems[itemType.id] = mix
                                 for mixItem in mix {
-                                    s.mixReverseLookup![mixItem] = itemType
+                                    mixReverseLookup[mixItem] = itemType
                                 }
                             }
                         }
                     }
                 })
-                s.refreshList()
+                completion(error: nil, mixReverseLookup: mixReverseLookup)
             })
         }
     }

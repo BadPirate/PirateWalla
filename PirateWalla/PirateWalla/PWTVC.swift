@@ -8,7 +8,129 @@
 
 import UIKit
 
-class PWTVC : UITableViewController {
+protocol ActivityWatcher {
+    func startedActivity(activity : String)
+    func stoppedActivity(activity : String)
+    func startedSubActivities(count : Int)
+    func stoppedSubActivity()
+    func cancelActivities()
+}
+
+class PWVC : UIViewController, ActivityWatcher {
+    let activityLock : dispatch_queue_t = dispatch_queue_create("ActivityLock", nil)
+    var activities = [String]()
+    var willUpdateProgress : Bool = false
+    let progressView  = UILabel(frame: CGRectMake(0,0,200,40))
+    var appeared = false
+    var alwaysShow = false
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        progressView.textAlignment = .Center
+        progressView.adjustsFontSizeToFitWidth = true
+        toolbarItems = [UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil),UIBarButtonItem(customView: progressView),UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target: nil, action: nil)]
+    }
+    
+    func updateProgress() {
+        if !NSThread.isMainThread() {
+            if willUpdateProgress { return }
+            willUpdateProgress = true;
+            dispatch_async(dispatch_get_main_queue(), { [weak self] () -> Void in
+                self?.updateProgress()
+                })
+            return
+        }
+        willUpdateProgress = false
+        if var progressString = activities.first {
+            if subActivityTotal > 0 {
+                progressString += " (\(subActivityTotal+1-subActivityRemaining)/\(subActivityTotal))"
+            }
+            if progressView.text != progressString {
+                print(progressString)
+                progressView.text = progressString
+            }
+            navigationController?.toolbarHidden = !appeared && !alwaysShow
+        }
+        else
+        {
+            if subActivityRemaining > 0 {
+                progressView.text = "(\(subActivityTotal+1-subActivityRemaining)/\(subActivityTotal))"
+            }
+            else
+            {
+                if progressView.text != nil {
+                    progressView.text = nil
+                }
+                navigationController?.toolbarHidden = true && !alwaysShow
+                didCompleteAllActivities()
+            }
+        }
+    }
+    
+    func startedActivity(activity : String) {
+        dispatch_sync(activityLock) { () -> Void in
+            self.activities.append(activity)
+        }
+        updateProgress()
+    }
+    
+    func cancelActivities() {
+        dispatch_sync(activityLock) { () -> Void in
+            self.activities.removeAll()
+            self.subActivityRemaining = 0
+            self.subActivityTotal = 0
+            self.updateProgress()
+        }
+    }
+    
+    func stoppedActivity(activity : String) {
+        dispatch_sync(activityLock) { () -> Void in
+            for on in 0..<self.activities.count {
+                let someActivity = self.activities[on]
+                if someActivity == activity {
+                    self.activities.removeAtIndex(on)
+                    break
+                }
+            }
+        }
+        updateProgress()
+    }
+    
+    var subActivityTotal : Int = 0
+    
+    func stoppedSubActivity() {
+        dispatch_sync(activityLock) { () -> Void in
+            self.subActivityRemaining--
+            self.updateProgress()
+        }
+    }
+    
+    func startedSubActivities(count: Int) {
+        dispatch_sync(activityLock) { () -> Void in
+            self.subActivityRemaining += count
+            self.subActivityTotal += count
+            self.updateProgress()
+        }
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        navigationController?.toolbarHidden = true
+        appeared = false
+        super.viewWillDisappear(animated)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        navigationController?.toolbarHidden = progressView.text != nil
+        appeared = true
+        super.viewWillAppear(animated)
+    }
+    
+    var subActivityRemaining : Int = 0
+    
+    func didCompleteAllActivities() { }
+}
+
+class PWTVC : UITableViewController, ActivityWatcher {
     var sections = [PWSection]()
     let progressView  = UILabel(frame: CGRectMake(0,0,200,40))
     var willUpdateSections : Bool = false
@@ -31,6 +153,15 @@ class PWTVC : UITableViewController {
         updateProgress()
     }
     
+    func cancelActivities() {
+        dispatch_sync(activityLock) { () -> Void in
+            self.activities.removeAll()
+            self.subActivityRemaining = 0
+            self.subActivityTotal = 0
+            self.updateProgress()
+        }
+    }
+    
     func stoppedActivity(activity : String) {
         dispatch_sync(activityLock) { () -> Void in
             for on in 0..<self.activities.count {
@@ -43,23 +174,31 @@ class PWTVC : UITableViewController {
         }
         updateProgress()
     }
+
+    var subActivityTotal : Int = 0
     
+    func stoppedSubActivity() {
+        dispatch_sync(activityLock) { () -> Void in
+            self.subActivityRemaining--
+            self.updateProgress()
+        }
+    }
+    
+    func startedSubActivities(count: Int) {
+        dispatch_sync(activityLock) { () -> Void in
+            self.subActivityRemaining += count
+            self.subActivityTotal += count
+            self.updateProgress()
+        }
+    }
+    
+    var subActivityRemaining : Int = 0
+
+
     override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         let row = sections[indexPath.section].rows[indexPath.row]
         if row.hidden { return 0 }
         return tableView.rowHeight
-    }
-    
-    var subActivityTotal : Int = 0 {
-        didSet {
-            updateProgress()
-        }
-    }
-    
-    var subActivityRemaining : Int = 0 {
-        didSet {
-            updateProgress()
-        }
     }
     
     override func viewWillDisappear(animated: Bool) {
@@ -103,11 +242,17 @@ class PWTVC : UITableViewController {
         }
         else
         {
-            if progressView.text != nil {
-                progressView.text = nil
+            if subActivityRemaining > 0 {
+                progressView.text = "(\(subActivityTotal+1-subActivityRemaining)/\(subActivityTotal))"
             }
-            navigationController?.toolbarHidden = true
-            didCompleteAllActivities()
+            else
+            {
+                if progressView.text != nil {
+                    progressView.text = nil
+                }
+                navigationController?.toolbarHidden = true
+                didCompleteAllActivities()
+            }
         }
     }
     

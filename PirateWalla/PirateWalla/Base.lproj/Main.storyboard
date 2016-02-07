@@ -364,7 +364,7 @@
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="18" sectionFooterHeight="18" id="9bN-WR-4Xv">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
                         <prototypes>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="basic" id="TA0-VF-BrE" customClass="PWCell" customModule="PirateWalla" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="114" width="600" height="44"/>
@@ -410,14 +410,14 @@
                                             <rect key="frame" x="15" y="16" width="32" height="20"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="16"/>
-                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                             <nil key="highlightedColor"/>
                                         </label>
                                         <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Detail" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="LxB-yF-i2X">
                                             <rect key="frame" x="15" y="36" width="31" height="14"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="11"/>
-                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                             <nil key="highlightedColor"/>
                                         </label>
                                     </subviews>
@@ -559,6 +559,77 @@
             </objects>
             <point key="canvasLocation" x="891" y="1079"/>
         </scene>
+        <!--Map-->
+        <scene sceneID="dBL-sI-PTK">
+            <objects>
+                <navigationController title="Map" id="h3N-Ne-3U1" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Map" image="map" id="3jF-gJ-rAy"/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="vDC-GI-kAs">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="J2o-Ll-xE4" kind="relationship" relationship="rootViewController" id="sZw-ee-bJN"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="kdj-cO-qdF" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="141" y="1853"/>
+        </scene>
+        <!--Map Search-->
+        <scene sceneID="4ZF-0M-AiF">
+            <objects>
+                <viewController id="J2o-Ll-xE4" customClass="MapVC" customModule="PirateWalla" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="ew2-ZZ-wHc"/>
+                        <viewControllerLayoutGuide type="bottom" id="Zcm-mc-M0S"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="wd9-IH-6TB">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" rotateEnabled="NO" pitchEnabled="NO" showsUserLocation="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UtO-2R-oTv">
+                                <rect key="frame" x="0.0" y="64" width="600" height="487"/>
+                                <connections>
+                                    <outlet property="delegate" destination="J2o-Ll-xE4" id="0ZK-sg-eB7"/>
+                                </connections>
+                            </mapView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="target" translatesAutoresizingMaskIntoConstraints="NO" id="Dyx-lr-h4M">
+                                <rect key="frame" x="286" y="286" width="28" height="28"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="28" id="7kd-h6-Mit"/>
+                                    <constraint firstAttribute="height" constant="28" id="i9p-T0-wc5"/>
+                                </constraints>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="Dyx-lr-h4M" firstAttribute="centerX" secondItem="wd9-IH-6TB" secondAttribute="centerX" id="Asc-FW-aQ6"/>
+                            <constraint firstItem="UtO-2R-oTv" firstAttribute="top" secondItem="ew2-ZZ-wHc" secondAttribute="bottom" id="Ddx-gD-Dk3"/>
+                            <constraint firstItem="Dyx-lr-h4M" firstAttribute="centerY" secondItem="wd9-IH-6TB" secondAttribute="centerY" id="FuI-SL-yw4"/>
+                            <constraint firstAttribute="trailing" secondItem="UtO-2R-oTv" secondAttribute="trailing" id="SaU-Ib-SUc"/>
+                            <constraint firstItem="Zcm-mc-M0S" firstAttribute="top" secondItem="UtO-2R-oTv" secondAttribute="bottom" id="a0o-Wa-e43"/>
+                            <constraint firstItem="UtO-2R-oTv" firstAttribute="leading" secondItem="wd9-IH-6TB" secondAttribute="leading" id="pgz-Lm-22v"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" title="Map Search" id="DrH-eX-DO2">
+                        <barButtonItem key="leftBarButtonItem" systemItem="refresh" id="6HP-3r-AB6"/>
+                        <barButtonItem key="rightBarButtonItem" image="pirate" id="bCh-aQ-KiO">
+                            <connections>
+                                <action selector="search" destination="J2o-Ll-xE4" id="9Dc-BT-4Zf"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="mapView" destination="UtO-2R-oTv" id="kDt-Nx-CEY"/>
+                        <outlet property="searchButton" destination="bCh-aQ-KiO" id="dVb-R8-Wzc"/>
+                        <outlet property="target" destination="Dyx-lr-h4M" id="gYt-AG-Agk"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="NHu-Gt-s4g" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="818" y="1853"/>
+        </scene>
         <!--Trade Maker-->
         <scene sceneID="mS6-bW-Id3">
             <objects>
@@ -566,7 +637,7 @@
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="18" sectionFooterHeight="18" id="grz-T1-h4s">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
                         <prototypes>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="basic" textLabel="5vM-g9-vao" style="IBUITableViewCellStyleDefault" id="IqH-UR-Xjq" customClass="PWCell" customModule="PirateWalla" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="114" width="600" height="44"/>
@@ -612,7 +683,7 @@
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="75" sectionHeaderHeight="18" sectionFooterHeight="18" id="Jbt-mE-UsP">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
                         <prototypes>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="trade" rowHeight="75" id="qTI-Eg-pvi" customClass="TradeCell" customModule="PirateWalla" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="114" width="600" height="75"/>
@@ -651,7 +722,7 @@
                                                         <constraint firstAttribute="height" constant="25" id="QJN-Wg-GU3"/>
                                                     </constraints>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                    <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                             </subviews>
@@ -696,7 +767,7 @@
                                                         <constraint firstAttribute="height" constant="25" id="j6n-WP-ZD0"/>
                                                     </constraints>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                    <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                             </subviews>
@@ -808,6 +879,7 @@
                     <connections>
                         <segue destination="CZv-xv-gEt" kind="relationship" relationship="viewControllers" id="DEr-vL-9xT"/>
                         <segue destination="L4d-ug-muY" kind="relationship" relationship="viewControllers" id="1av-2m-Bed"/>
+                        <segue destination="h3N-Ne-3U1" kind="relationship" relationship="viewControllers" id="NG8-9m-6AJ"/>
                         <segue destination="b9m-hH-pIt" kind="relationship" relationship="viewControllers" id="rIg-XS-x0A"/>
                     </connections>
                 </tabBarController>
@@ -818,13 +890,16 @@
     </scenes>
     <resources>
         <image name="becomes" width="19" height="16"/>
+        <image name="map" width="28" height="24"/>
         <image name="map_marker" width="16" height="26"/>
         <image name="market" width="28" height="20"/>
         <image name="more" width="28" height="6"/>
+        <image name="pirate" width="32" height="32"/>
         <image name="plus" width="14" height="14"/>
         <image name="saved" width="28" height="28"/>
         <image name="search" width="28" height="28"/>
         <image name="settings" width="26" height="26"/>
+        <image name="target" width="28" height="28"/>
         <image name="toolbox" width="26" height="20"/>
     </resources>
 </document>

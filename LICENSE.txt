@@ -1,0 +1,6 @@
+Code and graphics may be used for educational, personal, or private usage.
+Commercially release requires the license of the original author, Kevin Lohman, and may be granted free of cost if the work:
+* Is non redudant to the PirateWalla app
+* Contains an attribution ("Powered by PirateWalla")
+* And is offered for no cost
+Any derivative work must include this license and will be subject to the same restrictions.

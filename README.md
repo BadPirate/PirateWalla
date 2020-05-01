@@ -1,5 +1,7 @@
 # PirateWalla
 
+> NOTE: GoWalla changed / closed API, as such this project has been archived.
+
 Full X-Code project for the iOS App Store application "PirateWalla".
 
 No applications or commercial works may use this code without express license of the original author - badpirate@gmail.com
